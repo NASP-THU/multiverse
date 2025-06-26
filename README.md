@@ -100,9 +100,9 @@ Fetch the repository (don't forget the `--recursive`!):
 
 
 ```bash
-git  clone  --recursive  https://github.com/shacklettbp/madrona_escape_room.git
+git  clone  --recursive  https://github.com/harnets/multiverse.git
 
-cd  madrona_escape_room
+cd  multiverse
 
 ```
 
