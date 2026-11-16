@@ -1,0 +1,4386 @@
+[
+  {
+    "name": "AG_0_0",
+    "type": "COMM_COLL_NODE",
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 1
+      },
+      {
+        "name": "involved_dim",
+        "boolList": {
+          "values": [
+            false,
+            false,
+            true
+          ]
+        }
+      },
+      {
+        "name": "comm_type",
+        "int64Val": "2"
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "70783488"
+      }
+    ]
+  },
+  {
+    "id": "1",
+    "name": "F-0-0_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "0"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "2",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "1"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "3",
+    "name": "F-0-1_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "1"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "4",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "3"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "5",
+    "name": "F-0-2_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "3"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "6",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "5"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "7",
+    "name": "F-0-3_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "5"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "8",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "7"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "9",
+    "name": "F-0-4_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "7"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "10",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "9"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "11",
+    "name": "F-0-5_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "9"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "12",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "11"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "13",
+    "name": "F-0-6_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "11"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "14",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "13"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "15",
+    "name": "F-0-7_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "13"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "16",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "15"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "17",
+    "name": "AG_0_1",
+    "type": "COMM_COLL_NODE",
+    "dataDeps": [
+      "0"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 1
+      },
+      {
+        "name": "involved_dim",
+        "boolList": {
+          "values": [
+            false,
+            false,
+            true
+          ]
+        }
+      },
+      {
+        "name": "comm_type",
+        "int64Val": "2"
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "28316160"
+      }
+    ]
+  },
+  {
+    "id": "18",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "19",
+    "name": "F-1-0_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "17",
+      "18",
+      "15"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "20",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "19"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "21",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "18"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "22",
+    "name": "F-1-1_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "21",
+      "19"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "23",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "22"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "24",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "21"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "25",
+    "name": "F-1-2_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "24",
+      "22"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "26",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "25"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "27",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "24"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "28",
+    "name": "F-1-3_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "27",
+      "25"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "29",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "28"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "30",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "27"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "31",
+    "name": "F-1-4_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "30",
+      "28"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "32",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "31"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "33",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "30"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "34",
+    "name": "F-1-5_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "33",
+      "31"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "35",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "34"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "36",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "33"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "37",
+    "name": "F-1-6_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "36",
+      "34"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "38",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "37"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "39",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "36"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "40",
+    "name": "F-1-7_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "39",
+      "37"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "41",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "40"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "42",
+    "name": "F-0-8_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "40"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "43",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "42"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "44",
+    "name": "F-0-9_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "42"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "45",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "44"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "46",
+    "name": "F-0-10_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "44"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "47",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "46"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "48",
+    "name": "F-0-11_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "46"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "49",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "48"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "50",
+    "name": "F-0-12_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "48"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "51",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "50"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "52",
+    "name": "F-0-13_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "50"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "53",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "52"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "54",
+    "name": "F-0-14_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "52"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "55",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "54"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "56",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "39"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "57",
+    "name": "B-1-0_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "56",
+      "54"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "58",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "57"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "59",
+    "name": "F-0-15_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "57"
+    ],
+    "durationMicros": "8045",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "60",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "59"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "61",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "56"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "62",
+    "name": "B-1-1_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "61",
+      "59"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "63",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "62"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "64",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "61"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "65",
+    "name": "F-1-8_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "64",
+      "62"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "66",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "65"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "67",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "64"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "68",
+    "name": "B-1-2_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "67",
+      "65"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "69",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "68"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "70",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "67"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "71",
+    "name": "F-1-9_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "70",
+      "68"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "72",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "71"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "73",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "70"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "74",
+    "name": "B-1-3_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "73",
+      "71"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "75",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "74"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "76",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "73"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "77",
+    "name": "F-1-10_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "76",
+      "74"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "78",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "77"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "79",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "76"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "80",
+    "name": "B-1-4_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "79",
+      "77"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "81",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "80"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "82",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "79"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "83",
+    "name": "F-1-11_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "82",
+      "80"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "84",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "83"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "85",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "82"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "86",
+    "name": "B-1-5_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "85",
+      "83"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "87",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "86"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "88",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "85"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "89",
+    "name": "F-1-12_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "88",
+      "86"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "90",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "89"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "91",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "88"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "92",
+    "name": "B-1-6_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "91",
+      "89"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "93",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "92"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "94",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "91"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "95",
+    "name": "F-1-13_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "94",
+      "92"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "96",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "95"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "97",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "94"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "98",
+    "name": "B-1-7_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "97",
+      "95"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "99",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "98"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "100",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "97"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "101",
+    "name": "F-1-14_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "100",
+      "98"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "102",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "101"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "103",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "100"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "104",
+    "name": "B-0-0_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "103",
+      "101"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "105",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "103"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "767"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "106",
+    "name": "F-1-15_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "105",
+      "104"
+    ],
+    "durationMicros": "7316",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "107",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "106"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "719"
+      }
+    ]
+  },
+  {
+    "id": "108",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "105"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "109",
+    "name": "B-0-1_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "108",
+      "106"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "110",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "108"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "111",
+    "name": "B-0-2_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "110",
+      "109"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "112",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "110"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "113",
+    "name": "B-0-3_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "112",
+      "111"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "114",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "112"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "115",
+    "name": "B-0-4_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "114",
+      "113"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "116",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "114"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "117",
+    "name": "B-0-5_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "116",
+      "115"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "118",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "116"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "119",
+    "name": "B-0-6_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "118",
+      "117"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "120",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "118"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "121",
+    "name": "B-0-7_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "120",
+      "119"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "122",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "120"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "123",
+    "name": "B-1-8_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "122",
+      "121"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "124",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "123"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "125",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "122"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "126",
+    "name": "B-1-9_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "125",
+      "123"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "127",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "126"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "128",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "125"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "129",
+    "name": "B-1-10_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "128",
+      "126"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "130",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "129"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "131",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "128"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "132",
+    "name": "B-1-11_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "131",
+      "129"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "133",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "132"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "134",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "131"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "135",
+    "name": "B-1-12_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "134",
+      "132"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "136",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "135"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "137",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "134"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "138",
+    "name": "B-1-13_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "137",
+      "135"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "139",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "138"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "140",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "137"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "141",
+    "name": "B-1-14_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "140",
+      "138"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "142",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "141"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "143",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "140"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "144",
+    "name": "B-1-15_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "143",
+      "141"
+    ],
+    "durationMicros": "13428",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "145",
+    "name": "pp_send",
+    "type": "COMM_SEND_NODE",
+    "dataDeps": [
+      "144"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "711"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "767"
+      }
+    ]
+  },
+  {
+    "id": "146",
+    "name": "RS_0_1",
+    "type": "COMM_COLL_NODE",
+    "dataDeps": [
+      "17",
+      "144"
+    ],
+    "durationMicros": "1207",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 1
+      },
+      {
+        "name": "involved_dim",
+        "boolList": {
+          "values": [
+            false,
+            false,
+            true
+          ]
+        }
+      },
+      {
+        "name": "comm_type",
+        "int64Val": "7"
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "906117120"
+      }
+    ]
+  },
+  {
+    "id": "147",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "143"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "148",
+    "name": "B-0-8_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "147",
+      "144"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "149",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "147"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "150",
+    "name": "B-0-9_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "149",
+      "148"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "151",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "149"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "152",
+    "name": "B-0-10_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "151",
+      "150"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "153",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "151"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "154",
+    "name": "B-0-11_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "153",
+      "152"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "155",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "153"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "156",
+    "name": "B-0-12_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "155",
+      "154"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "157",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "155"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "158",
+    "name": "B-0-13_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "157",
+      "156"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "159",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "157"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "160",
+    "name": "B-0-14_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "159",
+      "158"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "161",
+    "name": "pp_recv",
+    "type": "COMM_RECV_NODE",
+    "dataDeps": [
+      "159"
+    ],
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 3
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "6291456"
+      },
+      {
+        "name": "comm_src",
+        "uint64Val": "719"
+      },
+      {
+        "name": "comm_dst",
+        "uint64Val": "711"
+      }
+    ]
+  },
+  {
+    "id": "162",
+    "name": "B-0-15_comp_megre",
+    "type": "COMP_NODE",
+    "dataDeps": [
+      "161",
+      "160"
+    ],
+    "durationMicros": "14157",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 4
+      }
+    ]
+  },
+  {
+    "id": "163",
+    "name": "RS_0_0",
+    "type": "COMM_COLL_NODE",
+    "dataDeps": [
+      "146",
+      "162"
+    ],
+    "durationMicros": "1207",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 1
+      },
+      {
+        "name": "involved_dim",
+        "boolList": {
+          "values": [
+            false,
+            false,
+            true
+          ]
+        }
+      },
+      {
+        "name": "comm_type",
+        "int64Val": "7"
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "2265071616"
+      }
+    ]
+  }
+]

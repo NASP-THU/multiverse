@@ -68,22 +68,7 @@ def int_array_to_madrona_events(int_array):
         events.append(event)
     return MadronaEvents(events)
 
-def empty_tensor(max_len=1000*100):
-    tensor = torch.zeros(max_len, dtype=torch.int32)
-    return tensor
 
-def string_to_tensor(s, max_len=1000*100):
-    """
-    Encode a string into numerical values and store it in a tensor.
-    :param s: The string to be encoded.
-    :param max_len: The maximum length of the tensor.
-    :return: A tensor containing the encoded string.
-    """
-    # ASCII code
-    encoded = [ord(c) for c in s]
-    tensor = torch.zeros(max_len, dtype=torch.int32)
-    tensor[:len(encoded)] = torch.tensor(encoded, dtype=torch.int32)
-    return tensor
 def tensor_to_string(tensor):
     """
     Convert the encoded tensor back into a string.
@@ -94,11 +79,6 @@ def tensor_to_string(tensor):
     s = ''.join(chr(int(i)) for i in encoded if int(i) != 0)  # to int
     return s
 
-def events_to_tensor(int_array, max_len=1000*100):
-    encoded = int_array
-    tensor = torch.zeros(max_len, dtype=torch.int32)
-    tensor[:len(encoded)] = torch.tensor(encoded, dtype=torch.int32)
-    return tensor
 def tensor_to_events(tensor):
     encoded = tensor.cpu().numpy().tolist() 
     return encoded

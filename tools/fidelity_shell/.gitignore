@@ -1,0 +1,14 @@
+# Ignore log files
+*.log
+
+# Ignore CSV data files
+*.csv
+
+# Ignore TXT data files
+*.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+

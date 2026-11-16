@@ -1,0 +1,22 @@
+{
+    "files.associations": {
+        "compare": "cpp",
+        "__locale": "cpp",
+        "locale": "cpp",
+        "thread": "cpp",
+        "array": "cpp",
+        "span": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "vector": "cpp",
+        "ranges": "cpp",
+        "memory": "cpp",
+        "propagate_const": "cpp",
+        "future": "cpp",
+        "istream": "cpp",
+        "tuple": "cpp",
+        "functional": "cpp",
+        "__node_handle": "cpp",
+        "queue": "cpp"
+    }
+}

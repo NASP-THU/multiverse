@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 #ifdef MADRONA_MACOS
         false;
 #else
-        true;
+    true;
 #endif
 
     WindowManager wm {};
@@ -74,15 +74,15 @@ int main(int argc, char *argv[])
 
     // Create the simulation manager
     Manager mgr({
-        .execMode = exec_mode,
-        .gpuID = 0,
-        .numWorlds = num_worlds,
-        .randSeed = 5,
-        .autoReset = replay_log.has_value(),
-        .enableBatchRenderer = enable_batch_renderer,
-        .extRenderAPI = wm.gpuAPIManager().backend(),
-        .extRenderDev = render_gpu.device(),
-    });
+            .execMode = exec_mode,
+            .gpuID = 0,
+            .numWorlds = num_worlds,
+            .randSeed = 5,
+            .autoReset = replay_log.has_value(),
+            .enableBatchRenderer = enable_batch_renderer,
+            .extRenderAPI = wm.gpuAPIManager().backend(),
+            .extRenderDev = render_gpu.device(),
+            });
 
     float camera_move_speed = 10.f;
 
@@ -90,17 +90,17 @@ int main(int argc, char *argv[])
 
     math::Quat initial_camera_rotation =
         (math::Quat::angleAxis(-math::pi / 2.f, math::up) *
-        math::Quat::angleAxis(-math::pi / 2.f, math::right)).normalize();
+         math::Quat::angleAxis(-math::pi / 2.f, math::right)).normalize();
 
 
     // Create the viewer viewer
     viz::Viewer viewer(mgr.getRenderManager(), window.get(), {
-        .numWorlds = num_worlds,
-        .simTickRate = 20,
-        .cameraMoveSpeed = camera_move_speed,
-        .cameraPosition = initial_camera_position,
-        .cameraRotation = initial_camera_rotation,
-    });
+            .numWorlds = num_worlds,
+            .simTickRate = 20,
+            .cameraMoveSpeed = camera_move_speed,
+            .cameraPosition = initial_camera_position,
+            .cameraRotation = initial_camera_rotation,
+            });
 
     // Replay step
     auto replayStep = [&]() {
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
             for (uint32_t j = 0; j < num_views; j++) {
                 uint32_t base_idx = 0;
                 base_idx = 4 * (cur_replay_step * num_views * num_worlds +
-                    i * num_views + j);
+                        i * num_views + j);
 
                 int32_t move_amount = (*replay_log)[base_idx];
                 int32_t move_angle = (*replay_log)[base_idx + 1];
@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
                 int32_t g = (*replay_log)[base_idx + 3];
 
                 printf("%d, %d: %d %d %d %d\n",
-                       i, j, move_amount, move_angle, turn, g);
+                        i, j, move_amount, move_angle, turn, g);
                 mgr.setAction(i, j, move_amount, move_angle, turn, g);
             }
         }
@@ -169,92 +169,92 @@ int main(int argc, char *argv[])
 
     // Main loop for the viewer viewer
     viewer.loop(
-    [&mgr](CountT world_idx, const Viewer::UserInput &input)
-    {
-        using Key = Viewer::KeyboardKey;
-        if (input.keyHit(Key::R)) {
+            [&mgr](CountT world_idx, const Viewer::UserInput &input)
+            {
+            using Key = Viewer::KeyboardKey;
+            if (input.keyHit(Key::R)) {
             mgr.triggerReset(world_idx);
-        }
-    },
-    [&mgr](CountT world_idx, CountT agent_idx,
-           const Viewer::UserInput &input)
-    {
-        using Key = Viewer::KeyboardKey;
-
-        int32_t x = 0;
-        int32_t y = 0;
-        int32_t r = 2;
-        int32_t g = 0;
-
-        bool shift_pressed = input.keyPressed(Key::Shift);
-
-        if (input.keyPressed(Key::W)) {
-            y += 1;
-        }
-        if (input.keyPressed(Key::S)) {
-            y -= 1;
-        }
-
-        if (input.keyPressed(Key::D)) {
-            x += 1;
-        }
-        if (input.keyPressed(Key::A)) {
-            x -= 1;
-        }
-
-        if (input.keyPressed(Key::Q)) {
-            r += shift_pressed ? 2 : 1;
-        }
-        if (input.keyPressed(Key::E)) {
-            r -= shift_pressed ? 2 : 1;
-        }
-
-        if (input.keyHit(Key::G)) {
-            g = 1;
-        }
-
-        int32_t move_amount;
-        if (x == 0 && y == 0) {
-            move_amount = 0;
-        } else if (shift_pressed) {
-            move_amount = consts::numMoveAmountBuckets - 1;
-        } else {
-            move_amount = 1;
-        }
-
-        int32_t move_angle;
-        if (x == 0 && y == 1) {
-            move_angle = 0;
-        } else if (x == 1 && y == 1) {
-            move_angle = 1;
-        } else if (x == 1 && y == 0) {
-            move_angle = 2;
-        } else if (x == 1 && y == -1) {
-            move_angle = 3;
-        } else if (x == 0 && y == -1) {
-            move_angle = 4;
-        } else if (x == -1 && y == -1) {
-            move_angle = 5;
-        } else if (x == -1 && y == 0) {
-            move_angle = 6;
-        } else if (x == -1 && y == 1) {
-            move_angle = 7;
-        } else {
-            move_angle = 0;
-        }
-
-        mgr.setAction(world_idx, agent_idx, move_amount, move_angle, r, g);
-    }, [&]() {
-        if (replay_log.has_value()) {
-            bool replay_finished = replayStep();
-
-            if (replay_finished) {
-                viewer.stopLoop();
             }
-        }
+            },
+            [&mgr](CountT world_idx, CountT agent_idx,
+                const Viewer::UserInput &input)
+            {
+            using Key = Viewer::KeyboardKey;
 
-        mgr.step();
+            int32_t x = 0;
+            int32_t y = 0;
+            int32_t r = 2;
+            int32_t g = 0;
 
-        //printObs();
-    }, []() {});
+            bool shift_pressed = input.keyPressed(Key::Shift);
+
+            if (input.keyPressed(Key::W)) {
+                y += 1;
+            }
+            if (input.keyPressed(Key::S)) {
+                y -= 1;
+            }
+
+            if (input.keyPressed(Key::D)) {
+                x += 1;
+            }
+            if (input.keyPressed(Key::A)) {
+                x -= 1;
+            }
+
+            if (input.keyPressed(Key::Q)) {
+                r += shift_pressed ? 2 : 1;
+            }
+            if (input.keyPressed(Key::E)) {
+                r -= shift_pressed ? 2 : 1;
+            }
+
+            if (input.keyHit(Key::G)) {
+                g = 1;
+            }
+
+            int32_t move_amount;
+            if (x == 0 && y == 0) {
+                move_amount = 0;
+            } else if (shift_pressed) {
+                move_amount = consts::numMoveAmountBuckets - 1;
+            } else {
+                move_amount = 1;
+            }
+
+            int32_t move_angle;
+            if (x == 0 && y == 1) {
+                move_angle = 0;
+            } else if (x == 1 && y == 1) {
+                move_angle = 1;
+            } else if (x == 1 && y == 0) {
+                move_angle = 2;
+            } else if (x == 1 && y == -1) {
+                move_angle = 3;
+            } else if (x == 0 && y == -1) {
+                move_angle = 4;
+            } else if (x == -1 && y == -1) {
+                move_angle = 5;
+            } else if (x == -1 && y == 0) {
+                move_angle = 6;
+            } else if (x == -1 && y == 1) {
+                move_angle = 7;
+            } else {
+                move_angle = 0;
+            }
+
+            mgr.setAction(world_idx, agent_idx, move_amount, move_angle, r, g);
+            }, [&]() {
+                if (replay_log.has_value()) {
+                    bool replay_finished = replayStep();
+
+                    if (replay_finished) {
+                        viewer.stopLoop();
+                    }
+                }
+
+                mgr.step();
+
+                //printObs();
+            }, []() {});
 }

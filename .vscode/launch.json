@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "GDB: python train_with_topo_fib_transfer",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "/data3/guifei/anaconda3/envs/madrona/bin/python",
+      "args": [
+        "${workspaceFolder}/scripts/train_with_topo_fib_transfer.py",
+        "--num-worlds", "1",
+        "--num-updates", "100",
+        "--ckpt-dir", "../build/ckpts",
+        "--gpu_id", "3",
+        "--fattree_K", "4",
+        "--cc_method", "1",
+        "--gpu-sim"
+      ],
+      "cwd": "${workspaceFolder}/scripts",
+      "stopAtEntry": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "console": "integratedTerminal"
+    }
+  ]
+}

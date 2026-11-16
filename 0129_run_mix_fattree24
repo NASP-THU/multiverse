@@ -1,0 +1,360 @@
+nohup: ignoring input
+=== 配置参数 ===
+dim0: 32
+dim1: 3
+dim2: 36
+npu_num: 3456
+================
+✓ 已更新 /data1/guifei/test/multiverse-dev/scripts/train_with_topo_fib_transfer.py
+✓ 已更新 /data1/guifei/test/multiverse-dev/src/types/llm_sys_types.hpp
+
+-- Populating madronabundledtoolchain
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /data1/guifei/test/multiverse-dev/external/madrona/external/madrona-toolchain/cmake-tmp/madronabundledtoolchain-subbuild
+[100%] Built target madronabundledtoolchain-populate
+-- Populating madronaprecompileddeps
+-- Configuring done (0.0s)
+-- Generating done (0.0s)
+-- Build files have been written to: /data1/guifei/test/multiverse-dev/external/madrona/external/madrona-deps/cmake-tmp/madronaprecompileddeps-subbuild
+[100%] Built target madronaprecompileddeps-populate
+-- Tests are disabled. Set FASTFLOAT_TEST to ON to run tests.
+-- Adding -Og to compile flag
+-- Could NOT find Doxygen (missing: DOXYGEN_EXECUTABLE) 
+-- Including X11 support
+-- Configuring done (1.1s)
+-- Generating done (0.3s)
+-- Build files have been written to: /data1/guifei/test/multiverse-dev/build
+[  0%] Built target madrona_embree_lib
+[  1%] Built target madrona_vk_loader
+[  2%] Built target generate_vk_dispatch
+[  2%] Built target madrona_libdxc_shlib
+[  4%] Built target madrona_err
+[  5%] Built target madrona_std_mem
+[  6%] Built target spv_reflect
+[ 19%] Built target meshoptimizer
+[ 20%] Built target simdjson
+[ 23%] Built target madrona_mem
+[ 24%] Built target madrona_cuda
+[ 27%] Built target madrona_python_utils
+[ 31%] Built target madrona_common
+[ 39%] Built target nanobind-static
+[ 41%] Built target madrona_physics_assets
+[ 42%] Built target madrona_render_shader_compiler
+[ 42%] Built target madrona_python_bindings
+[ 43%] Built target madrona_json
+[ 45%] Built target madrona_bvh_builder
+[ 47%] Built target madrona_mw_core
+[ 49%] Built target madrona_physics_loader
+[ 50%] Built target madrona_render_asset_processor
+[ 57%] Built target madrona_render_vk
+[ 58%] Built target madrona_rendering_system
+[ 61%] Built target madrona_mw_cpu
+[ 67%] Built target madrona_importer
+[ 69%] Built target madrona_mw_gpu
+[ 75%] Built target madrona_mw_physics
+[ 76%] Built target madrona_render_vk_cuda
+[ 79%] Built target madrona_render_core
+[ 80%] Built target madrona_render
+[ 82%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/llm_system.cpp.o
+[ 82%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/system_init.cpp.o
+[ 83%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/chakra_node_processing.cpp.o
+[ 83%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/communication_system.cpp.o
+[ 84%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/time_management.cpp.o
+[ 86%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sys/net_sys_interface.cpp.o
+[ 86%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/queue_system.cpp.o
+[ 87%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/congestion_control_system.cpp.o
+[ 87%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/packet_system.cpp.o
+[ 89%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/flow_system.cpp.o
+[ 89%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/nic_system.cpp.o
+[ 90%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/forward_system.cpp.o
+[ 90%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/transmit_system.cpp.o
+[ 91%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/network/network_config_system.cpp.o
+[ 91%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/sim.cpp.o
+[ 93%] Building CXX object src/CMakeFiles/mad_escape_cpu_impl.dir/level_gen.cpp.o
+[1m/data1/guifei/test/multiverse-dev/src/network/queue_system.cpp:123:23: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'int32_t' (aka 'int') and 'uint32_t' (aka 'unsigned int') [-Wsign-compare][0m
+  123 |         for (i = 1; i < len; i++) {[0m
+      | [0;1;32m                    ~ ^ ~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/level_gen.cpp:433:17: [0m[0;1;35mwarning: [0m[1munused variable 'num_switch' [-Wunused-variable][0m
+  433 |         int32_t num_switch = ctx.data().num_switch;[0m
+      | [0;1;32m                ^~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/level_gen.cpp:444:19: [0m[0;1;35mwarning: [0m[1munused variable 'fib' [-Wunused-variable][0m
+  444 |         uint8_t (*fib)[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM] = ctx.data().fib; // Correct type initialization[0m
+      | [0;1;32m                  ^~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/level_gen.cpp:445:17: [0m[0;1;35mwarning: [0m[1munused variable 'num_next_hop' [-Wunused-variable][0m
+  445 |         uint8_t num_next_hop = MAX_ONE_SW_PORT_NUM;[0m
+      | [0;1;32m                ^~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/nic_system.cpp:105:35: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'int64_t' (aka 'long') and 'uint64_t' (aka 'unsigned long') [-Wsign-compare][0m
+  105 |             if(_sim_time.sim_time > end_time){[0m
+      | [0;1;32m               ~~~~~~~~~~~~~~~~~~ ^ ~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/nic_system.cpp:163:148: [0m[0;1;35mwarning: [0m[1mformat specifies type 'void *' but the argument has type 'PktBuf *' [-Wformat-pedantic][0m
+  163 |             printf("Due to ingress port Entity %d is paused, nic queue %p transmit PFC state is PAUSE in sim time %ld\n", in_port_in_same_link.id, &_bid_pkt_buf.snd_buf, _sim_time.sim_time);[0m
+      | [0;1;32m                                                                       ~~                                                                          ^~~~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:211:99: [0m[0;1;35mwarning: [0m[1mformat specifies type 'int' but the argument has type 'NodeType' [-Wformat][0m
+  211 |   [1m /data1/guifei/test/multiverse-dev/src/network/nic_system.cpp : 168 : 150 :   [0m [0;1;35m warning:  [0m [1m format specifies type 'void *' but the argument has type 'PktBuf *' [-Wformat-pedantic] [0m 
+       168  |   p r  i n t f ( " # # #p#r#i#n#tpfr(o"cDeuses  tnoo -idnegpreensdse npcoyr tn oEdnet:i t%yd ,% dn oidse _rteyspuem:e d%,d \nni"c,  qnuoeduee. i%dp,  tnroadnes.mtiytp eP)F;C[0m 
+s      t| a[0;1;32mt                                                                                  ~~              ^~~~~~~~~e
+ [0mi      s|  [0;32mR                                                                                                  static_cast<int32_t>( )E
+S[0mUME in sim time %ld\n", in_port_in_same_link.id, &_bid_pkt_buf.snd_buf, _sim_time.sim_time);[0m
+      | [0;1;32m                                                                        ~~                                                                           ^~~~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:223:107: [0m[0;1;35mwarning: [0m[1mformat specifies type 'int' but the argument has type 'NodeType' [-Wformat][0m
+  223 |                     printf("[TEST CHAKRA NODE] process no-dependency node: %d, node_type: %d\n", node.id, node.type);[0m
+      | [0;1;32m                                                                                          ~~              ^~~~~~~~~
+[0m      | [0;32m                                                                                                          static_cast<int32_t>( )
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/nic_system.cpp:142:65: [0m[0;1;35mwarning: [0m[1munused parameter '_net_npu_id' [-Wunused-parameter][0m
+  142 |     void nic_transmit(Engine &ctx, NIC_ID &_nic_id, NET_NPU_ID &_net_npu_id,[0m
+      | [0;1;32m                                                                ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/nic_system.cpp:145:49: [0m[0;1;35mwarning: [0m[1munused parameter '_tx_history' [-Wunused-parameter][0m
+  145 |         [1m /data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp : 73 :B37i:d P[0mk[0;1;35mtwarning: B[0mu[1mftoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments] [0m&
+_bi   d73_ | p k t _ bpurfi,n tTfX(H"i s t o r y  I&N_FtOx:_ h"i smtsogr y",\ n[0m"
+,       | #[0;1;32m#                                                ^_
+_[0mVA[1m_/data1/guifei/test/multiverse-dev/src/network/nic_system.cppA:R146G:S39_:_ )[0m;[0;1;35m[0mwarning: 
+[0m      [1m| unused parameter '_seed' [-Wunused-parameter][0;1;32m[0m                                    ^
+
+  [0m146 |             NextHop &_next_hop, Seed &_seed) {[0m
+      | [0;1;32m                                      ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:60:36: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   60 |     printf("  WARNING: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                   ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:296:157: [0m[0;1;35mwarning: [0m[1mformat specifies type 'unsigned long' but the argument has type 'int' [-Wformat][0m
+  296 |     [1m /data1/guifei/test/multiverse-dev/src/network/nic_system.cpp : 195 : 64 :   [0m [0;1;35m warning:  [0m [1m unused parameter '_net_npu_id' [-Wunused-parameter] [0m 
+     195  |          v o i d  pnriicn_trfe(c"e[icvhea(nEgneg i2n]e  s&ecntdx ,n pNuI_Ci_dI D[ %&u_]n incp_ui_dn,u mN E=T%_lNuP,U _sIrDc  &=_%nleut,_ ndpsut_ i=d%,l[0mu
+,       | n[0;1;32mo                                                               ^d
+e[0m.comm_src =%lu, node.comm_dst =%lu.\n", id.value, npu_num, src, dst, node.comm_src, node.comm_dst);[0m
+      | [0;1;32m                                                                             ~~~                                                                            ^~~~~~~
+[0m      | [0;32m                                                                             %d
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   73 |     printf("      INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                    ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:330:156: [0m[0;1;35mwarning: [0m[1mformat specifies type 'int' but the argument has underlying type 'uint64_t' (aka 'unsigned long') [-Wformat][0m
+  330 |                                 printf("[TEST_ALL_COLLECTIVE]: NPU[%u],chakraNode[%u],comm_size: %lu, comm_type: %d\n", id.value, node.id, node.comm_size, node.comm_type);[0m
+      | [0;1;32m                                                                                                                 ~~                                        ^~~~~~~~~~~~~~
+[0m      | [0;32m                                                                                                                 %lu
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:366:40: [0m[0;1;35mwarning: [0m[1mdeclaration shadows a local variable [-Wshadow][0m
+  366 |                             for(size_t i=0; i<MAX_FLOW_NUM_PER_COMM_NODE; i++)[0m
+      | [0;1;32m                                       ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:195:25: [0m[0;1;36mnote: [0mprevious declaration is here[0m
+  195 |             for (size_t i = 0; i < static_cast < size_t > (node_count); i++) {[0m
+      | [0;1;32m                        ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:432:157: [0m[0;1;35mwarning: [0m[1mformat specifies type 'unsigned long' but the argument has type 'int' [-Wformat][0m
+  432 |                                 printf("[change 2] recv npu_id [%u] npu_num =%lu, src =%lu, dst =%lu, node.comm_src =%lu, node.comm_dst =%lu.\n", id.value, npu_num, src, dst, node.comm_src, node.comm_dst);[0m
+      | [0;1;32m                                                                             ~~~                                                                            ^~~~~~~
+[0m      | [0;32m                                                                             %d
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   73 |     printf("      INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                    ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:35: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   73 |     printf("      INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                  ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:531:153: [0m[0;1;35mwarning: [0m[1mformat specifies type 'int' but the argument has underlying type 'uint64_t' (aka 'unsigned long') [-Wformat][0m
+  531 |                             printf("[TEST_ALL_COLLECTIVE]: npu_id[%u], node_id[%u],comm_size: %lu, comm_type: %d\n", id.value, node.id, node.comm_size, node.comm_type);[0m
+      | [0;1;32m                                                                                                              ~~                                        ^~~~~~~~~~~~~~
+[0m      | [0;32m                                                                                                              %lu
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:544:36: [0m[0;1;35mwarning: [0m[1mformat specifies type 'unsigned long' but the argument has type 'uint32_t' (aka 'unsigned int') [-Wformat][0m
+  543 |                             printf("ProcessComm_E entity already exists for npu %lu node %d, reusing\n", [0m
+      | [0;1;32m                                                                                ~~~
+[0m      | [0;32m                                                                                %u
+[0m  544 |                                    id.value, node.id);[0m
+      | [0;1;32m                                   ^~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:553:36: [0m[0;1;35mwarning: [0m[1mdeclaration shadows a local variable [-Wshadow][0m
+  553 |                         for(size_t i=0; i<MAX_FLOW_NUM_PER_COMM_NODE; i++)[0m
+      | [0;1;32m                                   ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:195:25: [0m[0;1;36mnote: [0mprevious declaration is here[0m
+  195 |             for (size_t i = 0; i < static_cast < size_t > (node_count); i++) {[0m
+      | [0;1;32m                        ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   73 |     printf("      INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                    ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:650:45: [0m[0;1;35mwarning: [0m[1mdeclaration shadows a local variable [-Wshadow][0m
+  650 |                                 for (size_t i = 0; i < static_cast < size_t > (chunks_num); i++) {[0m
+      | [0;1;32m                                            ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:195:25: [0m[0;1;36mnote: [0mprevious declaration is here[0m
+  195 |             for (size_t i = 0; i < static_cast < size_t > (node_count); i++) {[0m
+      | [0;1;32m                        ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   73 |     printf("      INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                    ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:73:37: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:677:41: [0m[0;1;35mwarning: [0m[1mvariable 'offset' set but not used [-Wunused-but-set-variable][0m
+  677 |                                     int offset = 1;[0m
+      | [0;1;32m                                        ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:603:33: [0m[0;1;35mwarning: [0m[1menumeration value 'Tree' not handled in switch [-Wswitch][0m
+  603 |                         switch (comm_implementation_type) {[0m
+      | [0;1;32m                                ^~~~~~~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:287:37: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'uint64_t' (aka 'unsigned long') and 'int' [-Wsign-compare][0m
+  287 |                             if (src >= npu_num) {[0m
+      | [0;1;32m                                ~~~ ^  ~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:291:37: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'uint64_t' (aka 'unsigned long') and 'int' [-Wsign-compare][0m
+  291 |                             if (dst >= npu_num) {[0m
+      | [0;1;32m                                ~~~ ^  ~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:423:37: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'uint64_t' (aka 'unsigned long') and 'int' [-Wsign-compare][0m
+  423 |                             if (src >= npu_num) {[0m
+      | [0;1;32m                                ~~~ ^  ~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:427:37: [0m[0;1;35mwarning: [0m[1mcomparison of integers of different signs: 'uint64_t' (aka 'unsigned long') and 'int' [-Wsign-compare][0m
+  427 |                             if (dst >= npu_num) {[0m
+      | [0;1;32m                                ~~~ ^  ~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:977:23: [0m[0;1;35mwarning: [0m[1munused parameter 'chakraNodes' [-Wunused-parameter][0m
+  977 |         ChakraNodes & chakraNodes,[0m
+      | [0;1;32m                      ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:978:28: [0m[0;1;35mwarning: [0m[1munused parameter 'hardwareResource' [-Wunused-parameter][0m
+  978 |         HardwareResource & hardwareResource,[0m
+      | [0;1;32m                           ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:979:30: [0m[0;1;35mwarning: [0m[1munused parameter 'processingCompTask' [-Wunused-parameter][0m
+  979 |         ProcessingCompTask & processingCompTask,[0m
+      | [0;1;32m                             ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:980:31: [0m[0;1;35mwarning: [0m[1munused parameter 'processingCommTasks' [-Wunused-parameter][0m
+  980 |         ProcessingCommTasks & processingCommTasks,[0m
+      | [0;1;32m                              ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:981:30: [0m[0;1;35mwarning: [0m[1munused parameter 'oneNPUFinishedFlag' [-Wunused-parameter][0m
+  981 |         OneNPUFinishedFlag & oneNPUFinishedFlag,[0m
+      | [0;1;32m                             ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/llm_system.cpp:982:30: [0m[0;1;35mwarning: [0m[1munused parameter 'chakraNodesForNoDP' [-Wunused-parameter][0m
+  982 |         ChakraNodesForNoDP & chakraNodesForNoDP){[0m
+      | [0;1;32m                             ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/forward_system.cpp:253:89: [0m[0;1;35mwarning: [0m[1mformat specifies type 'void *' but the argument has type 'PktBuf *' [-Wformat-pedantic][0m
+  253 |                 printf("Egress queue is full %p, global_port_id: %d in sim time %ld\n", &egress_queue, _global_port_id.global_port_id, _sim_time.sim_time);[0m
+      | [0;1;32m                                             ~~                                         ^~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/forward_system.cpp:134:17: [0m[0;1;35mwarning: [0m[1munused variable 'end_time' [-Wunused-variable][0m
+  134 |         int64_t end_time = _sim_time.sim_time + _sim_time_per_update.sim_time_per_update;[0m
+      | [0;1;32m                ^~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:306:31: [0m[0;1;35mwarning: [0m[1munused parameter '_sim_time_per_update' [-Wunused-parameter][0m
+  306 |             SimTimePerUpdate &_sim_time_per_update) {[0m
+      | [0;1;32m                              ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:429:46: [0m[0;1;35mwarning: [0m[1munused parameter '_net_npu_id' [-Wunused-parameter][0m
+  429 |     void setup_flow(Engine &ctx, NET_NPU_ID &_net_npu_id,[0m
+      | [0;1;32m                                             ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:621:60: [0m[0;1;35mwarning: [0m[1mformat specifies type 'unsigned long long' but the argument has type 'uint64_t' (aka 'unsigned long') [-Wformat][0m
+  621 |                             printf("bitmap_value: %llu\n", bitmap_value);[0m
+      | [0;1;32m                                                  ~~~~     ^~~~~~~~~~~~
+[0m      | [0;32m                                                  %lu
+[0m1 warning generated.
+[1m/data1/guifei/test/multiverse-dev/src/network/packet_system.cpp:21:13: [0m[0;1;35mwarning: [0m[1mmisleading indentation; statement is not part of the previous 'else' [-Wmisleading-indentation][0m
+   21 |             printf("%s:: flow_id: %lu, src: %u, dst: %u, payload_len: %u, sq_num: %ld, enqueue_time: %ld, dequeue_time: %ld, ecn: %u, cid: %d, csn: %d\n", desc, p.flow_id, p.src, p.dst, (uint32_t)p.payload_len, p.sq_num, p.enqueue_time, p.dequeue_time, (uint32_t)p.ecn, p.cid, p.csn);[0m
+      | [0;1;32m            ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/packet_system.cpp:18:9: [0m[0;1;36mnote: [0mprevious statement is here[0m
+   18 |         else[0m
+      | [0;1;32m        ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:551:26: [0m[0;1;35mwarning: [0m[1mvariable 'ack_pkt_cnt' set but not used [-Wunused-but-set-variable][0m
+  551 |                 uint16_t ack_pkt_cnt = 0;[0m
+      | [0;1;32m                         ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/packet_system.cpp:37:22: [0m[0;1;35mwarning: [0m[1munused parameter '_path' [-Wunused-parameter][0m
+   37 |             uint32_t _path[MAX_PATH_LEN],[0m
+      | [0;1;32m                     ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/packet_system.cpp:38:21: [0m[0;1;35mwarning: [0m[1munused parameter 'path_len' [-Wunused-parameter][0m
+   38 |             uint8_t path_len,[0m
+      | [0;1;32m                    ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:484:13: [0m[0;1;35mwarning: [0m[1mvariable 'counter' set but not used [-Wunused-but-set-variable][0m
+  484 |         int counter=0;[0m
+      | [0;1;32m            ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:455:22: [0m[0;1;35mwarning: [0m[1munused parameter '_nic_rate' [-Wunused-parameter][0m
+  455 |             NICRate &_nic_rate, HSLinkDelay &_HS_link_delay, [0m
+      | [0;1;32m                     ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:1007:32: [0m[0;1;35mwarning: [0m[1munused variable 'recv_snd_flow_entt' [-Wunused-variable][0m
+ 1007 |                         Entity recv_snd_flow_entt = Entity::none();[0m
+      | [0;1;32m                               ^~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:1115:51: [0m[0;1;35mwarning: [0m[1munused parameter '_sim_time_per_update' [-Wunused-parameter][0m
+ 1115 |             SimTime &_sim_time, SimTimePerUpdate &_sim_time_per_update) {[0m
+      | [0;1;32m                                                  ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:1236:44: [0m[0;1;35mwarning: [0m[1munused parameter 'ctx' [-Wunused-parameter][0m
+ 1236 |     void clear_finished_flow_queue(Engine &ctx, NET_NPU_ID &_net_npu_id, CompletedFlowQueue &_completed_flow_queue,[0m
+      | [0;1;32m                                           ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:1236:61: [0m[0;1;35mwarning: [0m[1munused parameter '_net_npu_id' [-Wunused-parameter][0m
+ 1236 |     void clear_finished_flow_queue(Engine &ctx, NET_NPU_ID &_net_npu_id, CompletedFlowQueue &_completed_flow_queue,[0m
+      | [0;1;32m                                                            ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/network/flow_system.cpp:1237:47: [0m[0;1;35mwarning: [0m[1munused parameter '_sim_time_per_update' [-Wunused-parameter][0m
+ 1237 |         SimTime &_sim_time, SimTimePerUpdate &_sim_time_per_update) {[0m
+      | [0;1;32m                                              ^
+[0m3 warnings generated.
+7 warnings generated.
+[1m/data1/guifei/test/multiverse-dev/src/sys/net_sys_interface.cpp:46:32: [0m[0;1;35mwarning: [0m[1munused parameter 'ctx' [-Wunused-parameter][0m
+   46 |     bool isExistedFlow(Engine &ctx)[0m
+      | [0;1;32m                               ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sys/net_sys_interface.cpp:130:32: [0m[0;1;35mwarning: [0m[1munused parameter 'ctx' [-Wunused-parameter][0m
+  130 |     uint32_t getNpuNum(Engine &ctx)[0m
+      | [0;1;32m                               ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sim.cpp:43:66: [0m[0;1;35mwarning: [0m[1munused parameter 'cfg' [-Wunused-parameter][0m
+   43 |     void Sim::registerTypes(ECSRegistry &registry, const Config &cfg)[0m
+      | [0;1;32m                                                                 ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/sim.cpp:199:18: [0m[0;1;35mwarning: [0m[1munused variable 'sys_process_chakra_node' [-Wunused-variable][0m
+  199 |             auto sys_process_chakra_node = builder.addToGraph<ParallelForNode<Engine, llm_system::sys_processChakraNodes,[0m
+      | [0;1;32m                 ^~~~~~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sim.cpp:271:18: [0m[0;1;35mwarning: [0m[1munused variable 'remove_pkts_sys' [-Wunused-variable][0m
+  271 |             auto remove_pkts_sys = builder.addToGraph<ParallelForNode<Engine, remove_pkts, \[0m
+      | [0;1;32m                 ^~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sim.cpp:371:18: [0m[0;1;35mwarning: [0m[1munused variable 'sys_check_npu_finish' [-Wunused-variable][0m
+  371 |             auto sys_check_npu_finish = builder.addToGraph<ParallelForNode<Engine, llm_system::sys_checkNpuFinish, CheckNpuFinishFlag>>({sys_skip_time});[0m
+      | [0;1;32m                 ^~~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/sim.cpp:191:73: [0m[0;1;35mwarning: [0m[1munused parameter 'cfg' [-Wunused-parameter][0m
+  191 |     void Sim::setupTasks(TaskGraphManager &taskgraph_mgr, const Config &cfg)[0m
+      | [0;1;32m                                                                        ^
+[0m2 warnings generated.
+2 warnings generated.
+[1m/data1/guifei/test/multiverse-dev/src/sys/time_management.cpp:22:33: [0m[0;1;35mwarning: [0m[1mtoken pasting of ',' and __VA_ARGS__ is a GNU extension [-Wgnu-zero-variadic-macro-arguments][0m
+   22 |     printf("  INFO: " msg "\n", ##__VA_ARGS__);[0m
+      | [0;1;32m                                ^
+[0m1 warning generated.
+39 warnings generated.
+3 warnings generated.
+11 warnings generated.
+5 warnings generated.
+[ 93%] Linking CXX static library libmad_escape_cpu_impl.a
+[ 93%] Built target mad_escape_cpu_impl
+[ 94%] Building CXX object src/CMakeFiles/mad_escape_mgr.dir/mgr.cpp.o
+[ 95%] Linking CXX static library libmad_escape_mgr.a
+[ 95%] Built target mad_escape_mgr
+[ 97%] Building CXX object src/CMakeFiles/madrona_escape_room.dir/bindings.cpp.o
+[ 98%] Building CXX object src/CMakeFiles/headless.dir/headless.cpp.o
+[1m/data1/guifei/test/multiverse-dev/src/headless.cpp:68:13: [0m[0;1;35mwarning: [0m[1mmissing field 'maxEquivalentPathNum' initializer [-Wmissing-field-initializers][0m
+   68 |             });[0m
+      | [0;1;32m            ^
+[0m[1m/data1/guifei/test/multiverse-dev/src/bindings.cpp:105:41: [0m[0;1;35mwarning: [0m[1mISO C++ requires field designators to be specified in declaration order; field 'maxEquivalentPathNum' will be initialized after field 'ccMethod' [-Wreorder-init-list][0m
+  105 |                             .ccMethod = (uint32_t)cc_method[0m
+      | [0;1;32m                            ~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~
+[0m[1m/data1/guifei/test/multiverse-dev/src/bindings.cpp:104:53: [0m[0;1;36mnote: [0mprevious initialization for field 'maxEquivalentPathNum' is here[0m
+  104 |                             .maxEquivalentPathNum = (uint32_t)max_equivalent_path_num,[0m
+      | [0;1;32m                                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+[0m1 warning generated.
+[100%] Linking CXX executable ../headless
+[100%] Built target headless
+1 warning generated.
+[100%] Linking CXX shared module ../madrona_escape_room.cpython-312-x86_64-linux-gnu.so
+[100%] Built target madrona_escape_room
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+Looking in indexes: https://pypi.tuna.tsinghua.edu.cn/simple
+Obtaining file:///data1/guifei/test/multiverse-dev
+  Checking if build backend supports build_editable: started
+  Checking if build backend supports build_editable: finished with status 'done'
+  Getting requirements to build editable: started
+  Getting requirements to build editable: finished with status 'done'
+  Installing backend dependencies: started
+  Installing backend dependencies: finished with status 'done'
+  Preparing editable metadata (pyproject.toml): started
+  Preparing editable metadata (pyproject.toml): finished with status 'done'
+  WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+Building wheels for collected packages: madrona_escape_room
+  Building editable for madrona_escape_room (pyproject.toml): started
+  Building editable for madrona_escape_room (pyproject.toml): finished with status 'done'
+  Created wheel for madrona_escape_room: filename=madrona_escape_room-0.0.1-cp312-cp312-manylinux_2_35_x86_64.whl size=1536 sha256=f246910f7503a5b9cd34210e5bd07f1673f687cb05e4ab88d9b095fb1d6483e3
+  Stored in directory: /tmp/pip-ephem-wheel-cache-hkgm1_vz/wheels/78/b0/2d/3d750ab70f2c69e5d4699f8aea914819f93df6d4c9d1f51b22
+Successfully built madrona_escape_room
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+Installing collected packages: madrona_escape_room
+  Attempting uninstall: madrona_escape_room
+    WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+    Found existing installation: madrona_escape_room 0.0.1
+    Uninstalling madrona_escape_room-0.0.1:
+      Successfully uninstalled madrona_escape_room-0.0.1
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+Successfully installed madrona_escape_room-0.0.1
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)
+WARNING: Ignoring invalid distribution ~adrona-escape-room (/data3/guifei/software/miniconda3/envs/multiverse/lib/python3.12/site-packages)

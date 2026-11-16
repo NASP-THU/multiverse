@@ -1,0 +1,178 @@
+# Topology Processing Manual
+
+## Table of Contents
+1. Input Topology File Format
+2. Topology Parsing Process (`parse_topology_with_ports()`)
+3. Routing Table Generation (`build_global_routing_table_with_array()`) - Omitted
+4. Output
+5. Forwarding Process
+6. How to generate the topology
+
+## 1. Input (Topology File Format)
+
+**First Line**: `{num_nodes} {gpu_num_per_host} {num_nvs_switches} {num_sws} {len(links)} {gpu_type} {host_num}`
+- `num_nodes`: Total number of nodes
+- `gpu_num_per_host`: Number of GPU nodes per host
+- `num_nvs_switches`: Number of intra-node switches (NVSwitch + others)
+- `num_sws`: Total number of switches
+- `len(links)`: Total number of links
+- `gpu_type`: GPU type
+- `host_num`: Total number of hosts
+
+**Second Line**: Switch node IDs (including intra-node and network switches, with intra-node switches first, followed by network switches)
+
+**Third Line and Beyond**: Link source node ID, link destination node ID, bandwidth, latency, packet loss rate, weight, link type (NVL, PCIe, ETH, IB - first two are intra-node links, last two are inter-node links)
+
+### Notes:
+1. **File Path**: `scripts/fattree_4_16g_2gps_400Gbps_H100_no_scale_up`
+2. **Link Direction**: Links can be undirected or directed (parsing process converts all links to directed and supplements missing reverse links)
+3. **Intra-node Switch Support**: Currently not supported, please set corresponding positions to 0 in topology (support coming soon)
+
+## 2. Topology Parsing Process (`parse_topology_with_ports()`)
+
+```python
+# Parse the remaining lines for aj_link
+for line in lines[2:]:
+    parts = line.strip().split()
+    if parts[6] == "ETH" or parts[6] == "IB":
+        u = int(parts[0])
+        v = int(parts[1])
+        w = int(parts[5])
+        bw = int(parts[2].replace("Gbps", ""))  # bandwidth field
+        lat = int(parts[3].replace("ns", ""))   # link latency
+        
+        graph.add_link(u, v, w, bw, lat)
+        
+        if (u, v) not in link_set:
+            aj_link.append([u, v, w, bw, lat])  # Store link in the 2D array
+            link_set.add((u, v))
+        
+        # Check and add the reverse link if not already present
+        if (v, u) not in link_set:
+            aj_link.append([v, u, w, bw, lat])
+            link_set.add((v, u))
+```
+
+## 3. Routing Table Generation (`build_global_routing_table_with_array()`)
+*Implementation details omitted*
+
+## 4. Output
+
+### 4.1 Topology Structure
+Topology link information is stored in the `Topo` structure. The array variable `aj_link` stores each link [source node ID, destination node ID, weight, bandwidth, latency]. All links are directed.
+
+```cpp
+struct Topo {
+    int16_t aj_link[1000][5];                           // Link information array
+    uint32_t link_num;                                  // Number of links
+    
+    uint32_t net_npu_num;                              // Number of network NPUs
+    uint32_t sw_num;                                   // Number of switches
+
+    int16_t port_num[MAX_SW_NUM + MAX_NET_NPU_NUM];    // Port numbers per node
+    int16_t next_hop_port[MAX_ALL_PORT_NUM];           // Next hop port mapping
+    uint32_t sw_port_num;                              // Switch port count
+    uint32_t net_npu_port_num;                         // Network NPU port count
+
+    Topo() : aj_link{}, link_num(0), net_npu_num(0), sw_num(0), port_num{}, next_hop_port{} {}
+};
+```
+
+### 4.2 Forwarding Information Base (FIB)
+The routing table is stored in the `Fib` structure. The `next_hop_num` field is currently unused.
+
+```cpp
+struct Fib {
+    int16_t fib[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM];
+    int16_t next_hop_num[MAX_SW_NUM*MAX_ONE_SW_PORT_NUM + MAX_NET_NPU_NUM*2];
+    
+    Fib() {
+        std::memset(fib, 0, sizeof(fib));
+        std::memset(next_hop_num, 0, sizeof(next_hop_num));
+    }
+};
+```
+
+## 5. Forwarding Process
+
+### 5.1 Forward Plan System (`set_forward_plan`)
+Uses switch component data `port_num` to control bitmap dimensions.
+
+### 5.2 Forward System (`_forward`)
+Uses `[start_port_id, stop_port_id]` range to represent all port IDs of the current switch.
+
+---
+
+
+
+## 6. How to generate the topology
+
+The topology generation tools are located in the [`tools/gen_topo`](tools/gen_topo) directory, which provides scripts to generate various network topologies.
+
+### 6.1 Available Topology Generators
+
+The system currently supports two main topology types:
+
+#### Fat-Tree Topologies (`gen_fattree/`)
+- **Script**: [`gen_fattree_topo.py`](tools/gen_topo/gen_fattree/gen_fattree_topo.py)
+- **Runner**: [`run_gen_fattree.sh`](tools/gen_topo/gen_fattree/run_gen_fattree.sh)
+- **Pre-generated topologies**:
+  - `fattree_4_16g_2gps_400Gbps_H100` - 4-ary fat-tree, 16 GPUs, 2 GPUs per server
+  - `fattree_8_128g_4gps_400Gbps_H100` - 8-ary fat-tree, 128 GPUs, 4 GPUs per server
+  - `fattree_10_250g_5gps_400Gbps_H100` - 10-ary fat-tree, 250 GPUs, 5 GPUs per server
+  - `fattree_12_432g_6gps_400Gbps_H100` - 12-ary fat-tree, 432 GPUs, 6 GPUs per server
+  - `fattree_14_686g_7gps_400Gbps_H100` - 14-ary fat-tree, 686 GPUs, 7 GPUs per server
+  - `fattree_16_1024g_8gps_400Gbps_H100` - 16-ary fat-tree, 1024 GPUs, 8 GPUs per server
+
+### 6.2 Usage Instructions
+
+#### Generating Fat-Tree Topologies
+
+1. **Using the shell script** (recommended):
+   ```bash
+   cd tools/gen_topo/gen_fattree
+   ./run_gen_fattree.sh
+   ```
+
+2. **Using Python script directly**:
+   ```bash
+   cd tools/gen_topo/gen_fattree
+   python gen_fattree_topo.py [parameters]
+   ```
+
+#### Using Pre-generated Topologies
+
+Pre-generated topology files can be directly used by referencing their paths:
+- Fat-tree topologies: `tools/gen_topo/gen_fattree/fattree_*`
+
+### 6.3 Topology Naming Convention
+
+The topology files follow this naming pattern:
+```
+{topology_type}_{k_value}_{total_gpus}g_{gpus_per_server}gps_{bandwidth}_{gpu_type}[_options]
+```
+
+Where:
+- `topology_type`: Type of topology (e.g., fattree)
+- `k_value`: Fat-tree k parameter
+- `total_gpus`: Total number of GPUs in the topology
+- `gpus_per_server`: Number of GPUs per server
+- `bandwidth`: Link bandwidth (e.g., 400Gbps, 100Gbps)
+- `gpu_type`: GPU model (e.g., H100)
+- `options`: Additional options (e.g., `no_scale_up`)
+
+### 6.4 Custom Topology Generation
+
+To generate custom topologies:
+
+1. Modify the parameters in [`gen_fattree_topo.py`](tools/gen_topo/gen_fattree/gen_fattree_topo.py)
+2. Run the script to generate a new topology file
+3. The output will follow the topology file format described in Section 1
+
+
+
+
+
+
+
+**Note**: This manual describes the topology processing workflow in the multiverse networking simulation system. For implementation details and API references, please refer to the corresponding source code files.

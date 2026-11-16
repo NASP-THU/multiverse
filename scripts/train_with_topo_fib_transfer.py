@@ -1,5 +1,5 @@
-import torch
-import madrona_escape_room
+# -*- coding: utf-8 -*-
+# NOTE: torch and madrona_escape_room are imported later to avoid CUDA fork issues
 import time
 import numpy as np
 import argparse
@@ -9,15 +9,9 @@ import os
 import sys
 from pathlib import Path
 import warnings
-
-from madrona_escape_room_learn import (
-    train, profile, TrainConfig, PPOConfig, SimInterface,
-)
-
-from policy import make_policy, setup_obs
 from gen_fib_flex_topo import parse_topo, build_global_routing_table_with_array
 
-# 导入topo和fib数据传递助手
+# Import topo and fib data transfer helpers
 from topo_fib_helper import (
     TopoData, FibData,
     convert_madrona_topo_to_topo_data, 
@@ -25,141 +19,164 @@ from topo_fib_helper import (
     fib_to_tensor
 )
 
-torch.manual_seed(0)
+from parse_chakra import Node,Attribute,BoolList,Parse
+from node_conversion import folder_to_int_array
 
+enable_net_log=True
 
-
+def print_net_log(*args, **kwargs):
+    if enable_net_log:
+        print(*args, **kwargs)
 
 arg_parser = argparse.ArgumentParser()
-arg_parser.add_argument('--gpu-id', type=int, default=1)
 arg_parser.add_argument('--ckpt-dir', type=str, required=True)
 arg_parser.add_argument('--restore', type=int)
-
 arg_parser.add_argument('--num-worlds', type=int, required=True)
-arg_parser.add_argument('--num-updates', type=int, required=True)
+arg_parser.add_argument('--num_updates', type=int, required=True)
 arg_parser.add_argument('--steps-per-update', type=int, default=40)
 arg_parser.add_argument('--num-bptt-chunks', type=int, default=8)
-
 arg_parser.add_argument('--lr', type=float, default=1e-4)
 arg_parser.add_argument('--gamma', type=float, default=0.998)
 arg_parser.add_argument('--entropy-loss-coef', type=float, default=0.01)
 arg_parser.add_argument('--value-loss-coef', type=float, default=0.5)
 arg_parser.add_argument('--clip-value-loss', action='store_true')
-
 arg_parser.add_argument('--num-channels', type=int, default=256)
 arg_parser.add_argument('--separate-value', action='store_true')
 arg_parser.add_argument('--fp16', action='store_true')
-
 arg_parser.add_argument('--gpu-sim', action='store_true')
 arg_parser.add_argument('--profile-report', action='store_true')
-
 arg_parser.add_argument('--gpu_id', type=int, required=True, help='GPU ID')
 arg_parser.add_argument('--fattree_K', type=int, required=True, help='Fattree K value')
 arg_parser.add_argument('--cc_method', type=int, required=True, help='Congestion control method')
+arg_parser.add_argument('--topology-file', type=str, default='fattree_24_3456g_12gps_100Gbps_H100_no_scale_up', 
+                       help='Topology file name (without path)')
+
+arg_parser.add_argument('--workload-folder', type=str, default='special_modify_json', help='Workload folder name')
+
+arg_parser.add_argument('--run_model', type=int, default=0, help='Run model')
+    # enum RunModel : uint64_t
+# {
+#     SYS = 0,
+#     NET = 1,
+#     MIX = 2,
+# }
+
 
 args = arg_parser.parse_args()
 
-print(f"gpu id id: {args.gpu_id}")
-# print(f"Fattree K: {args.fattree_K}")
-print(f"CC Method: {args.cc_method}")
+if args.run_model == 0:
+    print_net_log("Running model: SYS")
+elif args.run_model == 1:
+    print_net_log("Running model: NET")
+elif args.run_model == 2:
+    print_net_log("Running model: MIX")
+else:
+    print_net_log("Invalid run model")
+    exit(1)
+
+print_net_log(f"gpu id id: {args.gpu_id}")
+print_net_log(f"CC Method: {args.cc_method}")
+print_net_log(f"Topology file: {args.topology_file}")
+print_net_log(f"Max Equivalent Path Num: {args.topology_file.split('_')[1]}")
 
 # Parse topology and initialize Topo struct
-# topology_file = "fattree_4_16g_2gps_100Gbps_H100_no_scale_up"
-topology_file = "Spectrum-X_128g_8gps_100Gbps_H100_no_scale_up_test"
-# topology_file = "fattree_16_1024g_8gps_100Gbps_H100_no_scale_up"
+topology_file = args.topology_file
 
-aj_link, link_num, net_npu_num, sw_num, port_num, switch_next_hop_port, net_npu_next_hop_port, sw_port_num, net_npu_port_num, graph, port_mapping, _ = parse_topo(topology_file)
 
-# print("sw_num: ", sw_num)
+#aj_link, link_num, net_npu_num, sw_num, port_num, switch_next_hop_port, net_npu_next_hop_port, sw_port_num, net_npu_port_num, graph, port_mapping, _ = parse_topo(topology_file)
 
-topo = madrona_escape_room.Topo()
-topo.link_num = link_num
-topo.net_npu_num = net_npu_num
-topo.sw_num = sw_num
-topo.sw_port_num = sw_port_num
-topo.net_npu_port_num = net_npu_port_num
+#_, global_routing_table_array, next_hop_num = build_global_routing_table_with_array(graph, port_mapping)
 
-# Assign aj_link
-topo.aj_link[:len(aj_link)] = np.array(aj_link, dtype=np.int16)
-# Assign port_num
-topo.port_num[:len(port_num)] = np.array(port_num, dtype=np.int16)
-# Combine switch_next_hop_port and net_npu_next_hop_port into next_hop_port
 
-# combined_next_hop_port's length equal to the real length of next_hop_port
-combined_next_hop_port = np.array(net_npu_next_hop_port[0:net_npu_port_num]+switch_next_hop_port[net_npu_port_num:net_npu_port_num+sw_port_num], dtype=np.int16)
-topo.next_hop_port[:len(combined_next_hop_port)] = combined_next_hop_port
-# print("net_npu_port_num: ", net_npu_port_num, "sw_port_num: ", sw_port_num)
-# print("next_hop_port\n", len(topo.next_hop_port), topo.next_hop_port)
 
-# Build global routing table and assign to Fib
-time_start = time.time()
-_, global_routing_table_array, next_hop_num = build_global_routing_table_with_array(graph, port_mapping)
-time_end = time.time()
-print(f"time cost for building global routing table: {time_end - time_start:.3f}s")
 
-fib = madrona_escape_room.Fib()
 
-# no longer directly access fib.fib property, but create an appropriate sized array and pass data through tensor
-# use our constants to determine the correct size
-from constants import MAX_SW_NUM, MAX_NET_NPU_NUM, MAX_ONE_SW_PORT_NUM
+# Define NPU configuration early (needed for tensor sizing)
+ring_dim0 = 4
+ring_dim1 = 2
+ring_dim2 = 16
+ring_dim0 = 4
+ring_dim1 = 2
+ring_dim2 = 16
+chunks_num = 1
+npu_num = 128  # Total number of NPUs
+chakra_nodes_data_length = 50000
 
-# create routing table array
-max_nodes = MAX_SW_NUM + MAX_NET_NPU_NUM
-adjusted_routing_table = np.full((max_nodes, max_nodes, MAX_ONE_SW_PORT_NUM), -1, dtype=np.int16)
+# ============================================================
+# CRITICAL: Process JSON files BEFORE importing CUDA modules
+# to avoid fork() deadlock with CUDA context
+# ============================================================
+data_tensor = None
+if args.run_model == 0 or args.run_model == 2:
+    print_net_log("=" * 80)
+    print_net_log("Step 1: Processing JSON files (before CUDA initialization)...")
+    print_net_log("=" * 80)
+    
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    workload_path = os.path.join(current_dir, "input", args.workload_folder)
+    print("workload path: ", workload_path)
 
-# fill actual routing data
-for i in range(min(len(global_routing_table_array), max_nodes)):
-    for j in range(min(len(global_routing_table_array[i]), max_nodes)):
-        route_len = min(len(global_routing_table_array[i][j]), MAX_ONE_SW_PORT_NUM)
-        if route_len > 0:
-            adjusted_routing_table[i, j, :route_len] = global_routing_table_array[i][j][:route_len]
+    # Process all JSON files using multiprocessing (or single-threaded if needed)
+    # Set max_workers=0 to force single-threaded mode
+    data = folder_to_int_array(workload_path, max_workers=0)  # FORCE SINGLE-THREADED
 
-# create next_hop_num array
-adjusted_next_hop_num = np.zeros((max_nodes, max_nodes), dtype=np.int16)
-next_hop_num_np = np.array(next_hop_num, dtype=np.int16)
-for i in range(min(next_hop_num_np.shape[0], max_nodes)):
-    for j in range(min(next_hop_num_np.shape[1], max_nodes)):
-        adjusted_next_hop_num[i, j] = next_hop_num_np[i, j]
+    print_net_log("=== Chakra Nodes Data Size Information ===")
+    print_net_log(f"Number of files processed: {len(data)}")
+    if len(data) > 0:
+        total_elements = sum(len(file_data) for file_data in data)
+        print_net_log(f"Total elements across all files: {total_elements:,}")
+        print_net_log(f"Average elements per file: {total_elements/len(data):.1f}")
+        print_net_log(f"Min elements in a file: {min(len(file_data) for file_data in data):,}")
+        print_net_log(f"Max elements in a file: {max(len(file_data) for file_data in data):,}")
+        
+        # calculate memory usage (assuming each element is 4 bytes)
+        total_memory_mb = total_elements * 4 / 1024 / 1024
+        print_net_log(f"Estimated memory usage: {total_memory_mb:.2f} MB ({total_memory_mb/1024:.2f} GB)")
+    else:
+        print_net_log("No data found!")
+    print_net_log("=== End Chakra Nodes Data Size Information ===\n")
 
-print(f"routing table size: {adjusted_routing_table.shape}")
-print(f"next_hop_num size: {adjusted_next_hop_num.shape}")
-print(f"sampled next hop num: fib[1] = {adjusted_next_hop_num[1][:5]}")  # show first 5 elements
+# ============================================================
+# NOW we can safely import CUDA modules
+# ============================================================
+print_net_log("=" * 80)
+print_net_log("Step 2: Importing CUDA modules...")
+print_net_log("=" * 80)
+import torch
+import madrona_escape_room
 
-# ========== new: convert data and create tensor ==========
-print("\n=== start TopoFib data tensorization and passing ===")
+torch.manual_seed(0)
 
-# 1. convert madrona data structure to our data structure
-print("1. convert data format...")
-topo_data = convert_madrona_topo_to_topo_data(topo)
+# Define tensor conversion functions (need torch imported)
+if args.run_model == 0 or args.run_model == 2:
+    chakra_nodes_num = npu_num
+    
+    def empty_tensor(rows=chakra_nodes_num, max_len=chakra_nodes_data_length):
+        tensor = torch.zeros((rows, max_len), dtype=torch.uint32)
+        return tensor
 
-# create FibData object and fill prepared data
-fib_data = FibData()
-fib_data.fib = adjusted_routing_table
-fib_data.next_hop_num = adjusted_next_hop_num
+    def ints_to_tensor(int_array, num_world=1, rows=chakra_nodes_num, max_len=chakra_nodes_data_length):
+        i = 0
+        # Create uint32 tensor first (to handle values > INT32_MAX)
+        tensor_uint32 = torch.zeros((num_world, rows, max_len), dtype=torch.uint32)
+        for array in int_array:
+            tensor_uint32[0, i, :len(array)] = torch.tensor(array, dtype=torch.uint32)
+            i += 1
+        # Return as int32 view (binary representation unchanged, framework requires int32)
+        return tensor_uint32.view(dtype=torch.int32)
 
-print(f"   TopoData size: {len(topo_data.to_flat_array())} elements")
-print(f"   FibData size: {len(fib_data.to_flat_array())} elements")
+    def tensor_to_ints(tensor):
+        encoded = tensor.cpu().numpy().tolist()
+        return encoded
 
-# 2. convert to tensor
-print("2. create tensor...")
-topo_tensor = topo_to_tensor(topo_data)
-fib_tensor = fib_to_tensor(fib_data)
+    # Convert data to tensor
+    data_tensor = ints_to_tensor(data)
+    print_net_log("data_tensor[0]: ", data_tensor[0][0][:100])
+    print_net_log("data_tensor[1]: ", data_tensor[0][1][:100])
 
-# calculate data size
-topo_size_mb = topo_tensor.numel() * 4 / 1024 / 1024
-fib_size_mb = fib_tensor.numel() * 4 / 1024 / 1024
-total_size_mb = topo_size_mb + fib_size_mb
-
-print(f"   Topo tensor: {topo_tensor.shape}, {topo_size_mb:.2f} MB")
-print(f"   Fib tensor: {fib_tensor.shape}, {fib_size_mb:.2f} MB")
-print(f"   Total data size: {total_size_mb:.2f} MB")
-
-if total_size_mb > 1000:  # if larger than 1GB
-    print(f"   Warning: data size is large ({total_size_mb:.2f} MB), please ensure enough memory")
-
-# ===============================================
-# create SimManager
-print("3. create SimManager and create Agent entity for data passing...")
+print_net_log("=" * 80)
+print_net_log("Step 3: Initializing simulation manager...")
+print_net_log("=" * 80)
 sim = madrona_escape_room.SimManager(
     exec_mode = madrona_escape_room.madrona.ExecMode.CUDA if args.gpu_sim else madrona_escape_room.madrona.ExecMode.CPU,
     gpu_id = args.gpu_id,
@@ -167,70 +184,138 @@ sim = madrona_escape_room.SimManager(
     rand_seed = 5,
     auto_reset = True,
     k_aray = args.fattree_K,
+    # max_equivalent_path_num = args.topology_file.split('_')[1],
+    max_equivalent_path_num = 128,
     cc_method = args.cc_method
 )
 
-# ========== pass topo and fibdata to C++ side==========
-print("4. pass topo and fib data to C++ side...")
+sim.parseTopologyFile(topology_file)
 
-try:
-    # get tensor reference from C++ side
-    sim_topo_tensor = sim.topo_tensor().to_torch()
-    sim_fib_tensor = sim.fib_tensor().to_torch()
-    
-    print(f"   C++ side topo tensor shape: {sim_topo_tensor.shape}")
-    print(f"   C++ side fib tensor shape: {sim_fib_tensor.shape}")
-    
-    # check tensor size compatibility
-    if topo_tensor.shape[0] > sim_topo_tensor.shape[1]:
-        raise ValueError(f"Topo data is too large: {topo_tensor.shape[0]} > {sim_topo_tensor.shape[1]}")
-    if fib_tensor.shape[0] > sim_fib_tensor.shape[1]:
-        raise ValueError(f"Fib data is too large: {fib_tensor.shape[0]} > {sim_fib_tensor.shape[1]}")
-    
-    # pass data (support multiple worlds)
-    for world_idx in range(args.num_worlds):
-        sim_topo_tensor[world_idx, :topo_tensor.shape[0]] = topo_tensor
-        sim_fib_tensor[world_idx, :fib_tensor.shape[0]] = fib_tensor
-    
-    print(f"   ✓ successfully pass data to {args.num_worlds} worlds")
-    
-    # verify data passing
-    print("5. verify data passing...")
-    test_world = 0
-    retrieved_topo = sim_topo_tensor[test_world, :len(topo_data.to_flat_array())].cpu().numpy()
-    retrieved_fib = sim_fib_tensor[test_world, :len(fib_data.to_flat_array())].cpu().numpy()
-    
-    original_topo = np.array(topo_data.to_flat_array())
-    original_fib = np.array(fib_data.to_flat_array())
-    
-    topo_match = np.array_equal(retrieved_topo, original_topo)
-    fib_match = np.array_equal(retrieved_fib, original_fib)
-    
-    print(f"   Topo data verification: {'✓ passed' if topo_match else '✗ failed'}")
-    print(f"   Fib data verification: {'✓ passed' if fib_match else '✗ failed'}")
-    
-    if not (topo_match and fib_match):
-        print("   Warning: data verification failed, please check tensor passing logic") 
-    
-except Exception as e:
-    print(f"   ✗ data passing failed: {e}")
-    print("   This may be because the C++ side has not finished compiling, continue running the original logic...")
 
-print("=== TopoFib data passing completed ===\n")
+if args.run_model == 0 or args.run_model == 2:
+    
+    # ========== Set ProcessParams data ==========
+    print_net_log("4. Setting ProcessParams data...")
 
-# =============================================
+    # parameters for parallel group size
+    # Ring parameters for collective communication
+    # Note: ring_dim0, ring_dim1, ring_dim2, chunks_num, and npu_num are already defined at the top
+    # ring_dim0 = 8
+    # ring_dim1 = 16
+    # ring_dim2 = 8
+    # chunks_num = 1
+    # npu_num=3456 #1024
+    all_npu_node_finish=0
+    ring_imp=0
+    tree_imp=1
+    # enum CollectiveCommType : uint64_t
+    # {
+    #     ALL_REDUCE = 0,
+    #     REDUCE = 1,
+    #     ALL_GATHER = 2,
+    #     GATHER = 3,
+    #     SCATTER = 4,
+    #     BROADCAST = 5,
+    #     ALL_TO_ALL = 6,
+    #     REDUCE_SCATTER = 7,
+    #     REDUCE_SCATTER_BLOCK = 8,
+    #     BARRIER = 9
+    # };
+    ALL_REDUCE = ring_imp
+    REDUCE = ring_imp
+    ALL_GATHER = ring_imp
+    GATHER = ring_imp
+    SCATTER = ring_imp
+    BROADCAST = ring_imp
+    ALL_TO_ALL = ring_imp
+    REDUCE_SCATTER = ring_imp
+    REDUCE_SCATTER_BLOCK = ring_imp
+    BARRIER = ring_imp
 
-# # immediately run a step to trigger tensor data reading and parsing
-# print("6. trigger tensor data reading and parsing...")
-# sim.step()
-# print("   ✓ tensor data reading and parsing step completed\n")
+
+
+    # Get ProcessParams tensor from simulator
+    try:
+        process_params_tensor = sim.processParams_tensor().to_torch()
+        print_net_log(f"   ProcessParams tensor shape: {process_params_tensor.shape}")
+        print_net_log(f"   ProcessParams tensor device: {process_params_tensor.device}, dtype: {process_params_tensor.dtype}")
+        
+        # Set ring parameters in tensor
+        # Layout: [0] = ring_dim0, [1] = ring_dim1, [2] = ring_dim2, [3] = chunks_num
+        # // ring form 0
+        # // npu_num from 100
+        # // coll-imp from 200
+        # // finish from 999
+        for world_idx in range(args.num_worlds):
+            process_params_tensor[world_idx, 0] = ring_dim0
+            process_params_tensor[world_idx, 1] = ring_dim1
+            process_params_tensor[world_idx, 2] = ring_dim2
+            process_params_tensor[world_idx, 3] = chunks_num
+            process_params_tensor[world_idx, 100] = npu_num
+            process_params_tensor[world_idx, 999] = 0
+            # ALL_REDUCE = ring_imp
+            # REDUCE = ring_imp
+            # ALL_GATHER = ring_imp
+            # GATHER = ring_imp
+            # SCATTER = ring_imp
+            # BROADCAST = ring_imp
+            # ALL_TO_ALL = ring_imp
+            # REDUCE_SCATTER = ring_imp
+            # REDUCE_SCATTER_BLOCK = ring_imp
+            # BARRIER ring_imp
+            process_params_tensor[world_idx, 200] = ALL_REDUCE
+            process_params_tensor[world_idx, 201] = REDUCE
+            process_params_tensor[world_idx, 202] = ALL_GATHER
+            process_params_tensor[world_idx, 203] = GATHER
+            process_params_tensor[world_idx, 204] = SCATTER
+            process_params_tensor[world_idx, 205] = BROADCAST
+            process_params_tensor[world_idx, 206] = ALL_TO_ALL
+            process_params_tensor[world_idx, 207] = REDUCE_SCATTER
+            process_params_tensor[world_idx, 208] = REDUCE_SCATTER_BLOCK
+            process_params_tensor[world_idx, 209] = BARRIER
+            process_params_tensor[world_idx, 999] = 0
+            # Remaining elements stay as 0 (reserved for future use)
+        
+        print_net_log(f"   ✓ ProcessParams data set for {args.num_worlds} worlds")
+        print_net_log(f"   ring_dim0={ring_dim0}, ring_dim1={ring_dim1}, ring_dim2={ring_dim2}, chunks_num={chunks_num}, npu_num={npu_num}")
+        
+        # Verify data setting
+        test_world = 0
+        retrieved_params = process_params_tensor[test_world, :5].cpu().numpy()
+        print_net_log(f"   Verification - retrieved params: {retrieved_params}")
+        
+    except Exception as e:
+        print_net_log(f"   ✗ ProcessParams data setting failed: {e}")
+
+    print_net_log("=== ProcessParams data setting completed ===\n")
+
+
+
+if args.run_model == 0 or args.run_model == 2:
+
+    sim.chakra_nodes_data_tensor().to_torch().copy_(data_tensor)
+    int_tensor=tensor_to_ints(sim.chakra_nodes_data_tensor().to_torch())
+    print_net_log("int_tensor[0]: ", int_tensor[0][0][:100])
+    print_net_log("int_tensor[1]: ", int_tensor[0][1][:100])
 
 # original training logic continues
+
 FRAME_LEN = 1000
 start = time.time()
-for i in range(args.num_updates):
+total_frame_time = 0.0
+
+
+print("num_updates:", args.num_updates, "\n")
+
+i=0
+while True:
+    
+    if (i >= args.num_updates):
+        break
+    
     frame_start = time.time()
-    print(f"\n-------- frame {i} ({(i)*FRAME_LEN} -- {(i+1)*FRAME_LEN}) --------")
+    if i%10==0:
+        print(f"\n-------- frame {i} ({(i)*FRAME_LEN} -- {(i+1)*FRAME_LEN}) --------")
     
     # check or update tensor data before each step
     if i == 0:
@@ -240,34 +325,29 @@ for i in range(args.num_updates):
     
     frame_end = time.time()
     frame_time = frame_end - frame_start
-    
+    if i != 0:
+        total_frame_time += frame_time
     # add dynamic update logic for tensor data
     # e.g. update routing table, topology changes, etc.
-    print(f"frame {i+1} completed, frame time cost: {frame_time:.3f}s")
+    if enable_net_log:
+        if i%100==0:
+            print(f"frame {i+1} completed, frame time cost: {frame_time:.3f}s, total frame time cost(without first frame): {total_frame_time:.3f}s")
 
+    if i%100==20:
+        process_params_tensor = sim.processParams_tensor().to_torch()
+        if process_params_tensor[0, 999]==1: # all npu tasks are finished
+            print_net_log(f"cpu end : all npu tasks are finished, at sim time: {(i+1) * FRAME_LEN} ns")
+            break
+    i+=1
 
     # # output tensor state every certain frames
     # if (i + 1) % 100 == 0:
     #     try:
     #         current_topo = sim.topo_tensor().to_torch()[0, :10]  # check the first 10 elements
-    #         print(f"   current topo tensor first 10 elements: {current_topo.cpu().numpy()}")
+    #         print_net_log(f"   current topo tensor first 10 elements: {current_topo.cpu().numpy()}")
     #     except:
     #         pass
+    
 end = time.time()
 total_time = end - start
-print(f"Simulation is completed!, total time cost: {total_time:.3f}s")
-
-# # optional: save final tensor state
-# try:
-#     final_topo_tensor = sim.topo_tensor().to_torch().cpu()
-#     final_fib_tensor = sim.fib_tensor().to_torch().cpu()
-    
-#     # save to file (if needed)
-#     # torch.save({
-#     #     'topo': final_topo_tensor,
-#     #     'fib': final_fib_tensor
-#     # }, 'final_topo_fib_state.pt')
-    
-#     print("Final tensor state is ready to save (if needed)")
-# except:
-#     pass 
+print(f"Simulation is completed!, total runtime(clock time) is: {total_time:.3f}s")

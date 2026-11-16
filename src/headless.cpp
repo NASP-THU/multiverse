@@ -12,9 +12,9 @@
 using namespace madrona;
 
 [[maybe_unused]] static void saveWorldActions(
-    const HeapArray<int32_t> &action_store,
-    int32_t total_num_steps,
-    int32_t world_idx)
+        const HeapArray<int32_t> &action_store,
+        int32_t total_num_steps,
+        int32_t world_idx)
 {
     const int32_t *world_base = action_store.data() + world_idx * total_num_steps * 2 * 3;
 
@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
     uint64_t num_steps = std::stoul(argv[3]);
 
     HeapArray<int32_t> action_store(
-        num_worlds * 2 * num_steps * 3);
+            num_worlds * 2 * num_steps * 3);
 
     bool rand_actions = false;
     if (argc >= 5) {
@@ -57,13 +57,15 @@ int main(int argc, char *argv[])
     }
 
     Manager mgr({
-        .execMode = exec_mode,
-        .gpuID = 0,
-        .numWorlds = (uint32_t)num_worlds,
-        .randSeed = 5,
-        .autoReset = false,
-        .enableBatchRenderer = false,
-    });
+            .execMode = exec_mode,
+            .gpuID = 0,
+            .numWorlds = (uint32_t)num_worlds,
+            .randSeed = 5,
+            .autoReset = false,
+            .enableBatchRenderer = false,
+            .kAray = 0,
+            .ccMethod = 0
+            });
 
     std::random_device rd;
     std::mt19937 rand_gen(rd());
@@ -80,7 +82,7 @@ int main(int argc, char *argv[])
                     int32_t r = act_rand(rand_gen);
 
                     mgr.setAction(j, k, x, y, r, 0);
-                    
+
                     int64_t base_idx = j * num_steps * 2 * 3 + i * 2 * 3 + k * 3;
                     action_store[base_idx] = x;
                     action_store[base_idx + 1] = y;

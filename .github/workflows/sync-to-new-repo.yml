@@ -1,0 +1,25 @@
+name: Sync to new-repo
+
+on:
+  push:
+    branches:
+      - flex_topo
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror push to target repo
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        run: |
+          git config --global user.name "ShawnshanksGui"
+          git config --global user.email "fei467475649@gmail.com"
+          git remote add mirror https://$GH_TOKEN@github.com/ShawnshanksGui/MultiverseV2_4_ChinaMobile.git
+          git push --force --mirror mirror
+          echo "Token starts with: ${GH_TOKEN:0:5}"

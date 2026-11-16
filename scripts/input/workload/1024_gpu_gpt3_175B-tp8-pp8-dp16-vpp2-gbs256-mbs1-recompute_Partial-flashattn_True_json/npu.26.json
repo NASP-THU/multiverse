@@ -1,0 +1,35 @@
+[
+  {
+    "name": "AG_3_0",
+    "type": "COMM_COLL_NODE",
+    "durationMicros": "1",
+    "attr": [
+      {
+        "name": "is_cpu_op",
+        "boolVal": false
+      },
+      {
+        "name": "comm_para",
+        "uint32Val": 1
+      },
+      {
+        "name": "involved_dim",
+        "boolList": {
+          "values": [
+            false,
+            true,
+            false
+          ]
+        }
+      },
+      {
+        "name": "comm_type",
+        "int64Val": "2"
+      },
+      {
+        "name": "comm_size",
+        "uint64Val": "28316160"
+      }
+    ]
+  }
+]

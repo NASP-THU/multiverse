@@ -36,11 +36,9 @@ def receive_data():
     messages = []
     for _ in range(numMessages):
         data = map_file.read(28)  #  MadronaMsg = 24byte
-        # message = MadronaMsg(data)
         unpacked_data = struct.unpack('7i', data)
         message = MadronaMsg(*unpacked_data)  
         messages.append(message)
-    # print(f"Madrona: Received from Astrasim: {messages}")
     return messages
 
 def send_data(messages):
@@ -52,5 +50,3 @@ def comm_dispose():
     memory.close_fd()
     semaphore_a.close()
     semaphore_b.close()
-
-# comm()

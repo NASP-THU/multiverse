@@ -1,7 +1,9 @@
 import heapq
 from collections import defaultdict, deque
 import copy
-
+import multiprocessing as mp
+from functools import partial
+import time
 
 
 class NetworkGraph:
@@ -27,77 +29,6 @@ class NetworkGraph:
                 for neighbor, _, _ in self.graph[node]:
                     queue.append(neighbor)
         return len(visited) == self.num_nodes
-    
-    # def is_connected(self, verbose=True):
-    #     """
-    #     检查图是否连通，如果不连通则输出不连通的部分
-        
-    #     Args:
-    #         verbose: 是否输出详细的不连通信息
-        
-    #     Returns:
-    #         tuple: (is_connected: bool, disconnected_components: list)
-    #     """
-    #     if self.num_nodes == 0:
-    #         return True, []
-        
-    #     visited = set()
-    #     queue = deque([0])
-        
-    #     # 从节点0开始BFS遍历
-    #     while queue:
-    #         node = queue.popleft()
-    #         if node not in visited:
-    #             visited.add(node)
-    #             for neighbor, _, _ in self.graph[node]:
-    #                 if neighbor not in visited:
-    #                     queue.append(neighbor)
-        
-    #     # 检查是否连通
-    #     is_fully_connected = len(visited) == self.num_nodes
-        
-    #     if is_fully_connected:
-    #         return True, []
-        
-    #     # 如果不连通，找出所有不连通的组件
-    #     disconnected_components = []
-    #     unvisited = set(range(self.num_nodes)) - visited
-        
-    #     while unvisited:
-    #         # 找出每个不连通组件
-    #         component = set()
-    #         start_node = next(iter(unvisited))
-    #         component_queue = deque([start_node])
-            
-    #         while component_queue:
-    #             node = component_queue.popleft()
-    #             if node not in component:
-    #                 component.add(node)
-    #                 unvisited.discard(node)
-    #                 for neighbor, _, _ in self.graph[node]:
-    #                     if neighbor in unvisited:
-    #                         component_queue.append(neighbor)
-            
-    #         disconnected_components.append(sorted(list(component)))
-        
-    #     if verbose:
-    #         print(f"图不连通！发现 {len(disconnected_components) + 1} 个连通分量：")
-    #         print(f"主要连通分量 (从节点0可达): {sorted(list(visited))}")
-    #         for i, component in enumerate(disconnected_components):
-    #             print(f"不连通分量 {i+1}: {component}")
-            
-    #         # 输出每个不连通分量的连接信息
-    #         for i, component in enumerate(disconnected_components):
-    #             print(f"\n不连通分量 {i+1} 的内部连接:")
-    #             for node in component:
-    #                 neighbors = [neighbor for neighbor, _, _ in self.graph[node]]
-    #                 if neighbors:
-    #                     print(f"  节点 {node} 连接到: {neighbors}")
-    #                 else:
-    #                     print(f"  节点 {node} 没有连接")
-        
-    #     return False, disconnected_components
-
 
 def dijkstra_ecmp(graph, src):
     dist = [float('inf')] * graph.num_nodes
@@ -138,13 +69,6 @@ def dijkstra_ecmp(graph, src):
 def build_global_routing_table(graph, port_mapping):
     if not graph.is_connected():
         raise ValueError("Network is disconnected. Cannot build full routing table.")
-    # is_connected_result, disconnected_components = graph.is_connected()
-    # if not is_connected_result:
-    #     error_msg = f"网络不连通，无法构建完整的路由表。发现 {len(disconnected_components)} 个不连通分量"
-    #     for i, component in enumerate(disconnected_components):
-    #         error_msg += f"\n不连通分量 {i+1}: {component}"
-    #     raise ValueError(error_msg)
-
     global_table = []
     for src in range(graph.num_nodes):
         if src not in port_mapping:
@@ -163,8 +87,163 @@ def build_global_routing_table(graph, port_mapping):
         global_table.append(routing_table)
     return global_table
 
+def _compute_routing_table_for_source(src, graph_data, port_mapping_data):
+    """
+    work function for single source node to calculate routing table
+    this function will run in sub-process
+    """ 
+    # rebuild graph object (because multiprocessing needs to serialize data)
+    graph = NetworkGraph(graph_data['num_nodes'], graph_data['num_npus'])
+    graph.graph = graph_data['graph']
+    
+    if src not in port_mapping_data:
+        return src, []
+    
+    routing_table = []
+    next_hops = dijkstra_ecmp(graph, src)
+    
+    for dst in range(graph.num_nodes):
+        if dst in next_hops:
+            hops = sorted(
+                [port_mapping_data[src]['local'][nhop] 
+                 for nhop in next_hops[dst] 
+                 if nhop in port_mapping_data[src]['local']]
+            )
+        else:
+            hops = []
+        routing_table.append((dst, hops))
+    return src, routing_table
+
+def build_global_routing_table_parallel(graph, port_mapping, num_processes=60):
+    """
+    parallel version of global routing table building function
+    
+    Args:
+        graph: NetworkGraph object
+        port_mapping: port mapping dictionary  
+        num_processes: number of processes, default is CPU core number
+        
+    Returns:
+        global_table: global routing table in the same format as the serial version
+    """
+
+    # if not graph.is_connected():
+    #     raise ValueError("Network is disconnected. Cannot build full routing table.")
+    
+    # if num_processes is not specified, use CPU core number
+    if num_processes is None:
+        num_processes = mp.cpu_count()
+    
+    # if there is only one node or the number of processes is 1, use the serial version
+    if graph.num_nodes <= 1 or num_processes <= 1:
+        print("the number of nodes is too small or the number of processes is 1, use the serial version...")
+        return build_global_routing_table(graph, port_mapping)
+    
+    print(f"use {num_processes} processes to calculate routing table...")
+    
+    # prepare serializable data
+    graph_data = {
+        'num_nodes': graph.num_nodes,
+        'num_npus': graph.num_npus,
+        'graph': dict(graph.graph)
+    }
+    
+    # prepare source node list
+    source_nodes = list(range(graph.num_nodes))
+    
+    try:
+        # create process pool and calculate in parallel
+        with mp.Pool(processes=num_processes) as pool:
+            # use partial to fix graph_data and port_mapping parameters
+            worker_func = partial(_compute_routing_table_for_source, 
+                                graph_data=graph_data, 
+                                port_mapping_data=port_mapping)
+            
+            # calculate routing table for all source nodes in parallel
+            results = pool.map(worker_func, source_nodes)
+            
+            # show progress
+            for i, (src, _) in enumerate(results):
+                if i % max(1, len(results) // 10) == 0:  # show progress every 10%
+                    print(f"progress: {i}/{len(results)} ({100*i//len(results)}%)")
+    
+    except Exception as e:
+        print(f"parallel calculation error, fallback to serial version: {e}")
+        return build_global_routing_table(graph, port_mapping)
+    
+    # reorganize results by source node order
+    global_table = [None] * graph.num_nodes
+    for src, routing_table in results:
+        global_table[src] = routing_table
+    
+    end_time = time.time()
+    
+    return global_table
+
 def build_global_routing_table_with_array(graph, port_mapping):
-    global_table = build_global_routing_table(graph, port_mapping)
+    # global_table = build_global_routing_table(graph, port_mapping)
+    start_time = time.time()
+    global_table = build_global_routing_table_parallel(graph, port_mapping) 
+    end_time = time.time()
+    print(f"the time of calculating routing table is: {end_time - start_time:.2f} s")
+    
+    num_nodes = graph.num_nodes
+    max_destinations = graph.num_nodes
+    max_next_hops = max(len(entry[1]) for table in global_table for entry in table)
+
+    global_routing_table_array = [[[255 for _ in range(max_next_hops)] 
+                                   for _ in range(max_destinations)] 
+                                  for _ in range(num_nodes)]
+
+    start_time = time.time()
+    for src, table_entries in enumerate(global_table):
+        for dst, (destination, next_hops) in enumerate(table_entries):
+            if dst < len(global_routing_table_array[src]):
+                for idx, hop in enumerate(next_hops):
+                    if idx < len(global_routing_table_array[src][dst]):
+                        global_routing_table_array[src][dst][idx] = hop
+    end_time = time.time()
+    print(f"the time of calculating routing table array is: {end_time - start_time:.2f} s")
+
+    start_time = time.time()
+    next_hop_num = [[0 for _ in range(max_destinations)] for _ in range(num_nodes)]
+
+    for src, table_entries in enumerate(global_table):
+        for dst, (destination, next_hops) in enumerate(table_entries):
+            if dst < len(global_routing_table_array[src]):
+                for idx, hop in enumerate(next_hops):
+                    if idx < len(global_routing_table_array[src][dst]):
+                        global_routing_table_array[src][dst][idx] = hop
+                next_hop_num[src][dst] = sum(1 for hop in global_routing_table_array[src][dst] if (hop >= 0 and hop < 200))
+    end_time = time.time()
+    print(f"the time of calculating next_hop_num is: {end_time - start_time:.2f} s")    
+    
+    for src in range(num_nodes):
+        print("src: ", src)
+        print(next_hop_num[src])
+    
+    print("\n")   
+    
+    return global_table, global_routing_table_array, next_hop_num
+
+def build_global_routing_table_with_array_parallel(graph, port_mapping, num_processes=None):
+    """
+    parallel version of global routing table building function (including array format conversion)
+    
+    Args:
+        graph: NetworkGraph object
+        port_mapping: port mapping dictionary  
+        num_processes: number of processes, default is CPU core number
+        
+    Returns:
+        tuple: (global_table, global_routing_table_array, next_hop_num)
+                the same format as the serial version
+    """
+    # use parallel version to calculate global routing table
+    global_table = build_global_routing_table_parallel(graph, port_mapping, num_processes)
+    
+    print("convert routing table to array format...")
+    
     num_nodes = graph.num_nodes
     max_destinations = graph.num_nodes
     max_next_hops = max(len(entry[1]) for table in global_table for entry in table)
@@ -190,6 +269,7 @@ def build_global_routing_table_with_array(graph, port_mapping):
                         global_routing_table_array[src][dst][idx] = hop
                 next_hop_num[src][dst] = sum(1 for hop in global_routing_table_array[src][dst] if hop >= 0)
 
+    print("array format conversion completed!")
     return global_table, global_routing_table_array, next_hop_num
 
 def parse_topology_with_ports(file_path):
@@ -200,31 +280,28 @@ def parse_topology_with_ports(file_path):
     num_nodes = int(parts[0])
     sw_num = int(parts[3])
     num_links = int(parts[4])
-    
     switch_ids = list(map(int, lines[1].strip().split()))
-    
     graph = NetworkGraph(num_nodes, num_nodes-sw_num)
     aj_link = []
     link_set = set()
     
     for line in lines[2:]:
         parts = line.strip().split()
-        if parts[6] == "ETH" or parts[6] == "IB":
-            u = int(parts[0])
-            v = int(parts[1])
-            w = int(parts[5])
-            bw = int(parts[2].replace("Gbps", ""))
-            lat = int(parts[3].replace("ns", ""))
-            graph.add_link(u, v, w, bw, lat)
-            if (u, v) not in link_set:
-                aj_link.append([u, v, w, bw, lat])
-                link_set.add((u, v))
-            if (v, u) not in link_set:
-                aj_link.append([v, u, w, bw, lat])
-                link_set.add((v, u))
+        # if parts[6] == "ETH" or parts[6] == "IB":
+        u = int(parts[0])
+        v = int(parts[1])
+        w = int(parts[5])
+        bw = int(parts[2].replace("Gbps", ""))
+        lat = int(parts[3].replace("ns", ""))
+        graph.add_link(u, v, w, bw, lat)
+        if (u, v) not in link_set:
+            aj_link.append([u, v, w, bw, lat])
+            link_set.add((u, v))
+        if (v, u) not in link_set:
+            aj_link.append([v, u, w, bw, lat])
+            link_set.add((v, u))
     
     aj_link = sorted(aj_link, key=lambda x: (x[0], x[1]))
-    
     port_mapping = {}
     global_port_counter = 0
     for node in range(num_nodes):
@@ -314,7 +391,6 @@ def generate_port_connection_lists(port_mapping, graph, switch_ids, use_separate
 
     net_npu_port_count = sum(1 for port in net_npu_next_hop_port if port >= 0)
     switch_port_count = sum(1 for port in switch_next_hop_port if port >= 0)
-    
     return switch_next_hop_port, net_npu_next_hop_port, switch_port_count, net_npu_port_count
 
 def generate_node_port_counts(port_mapping):
@@ -331,6 +407,11 @@ def parse_topo(topology_file):
     return aj_link, link_num, net_npu_num, sw_num, port_num, switch_next_hop_port, net_npu_next_hop_port, switch_port_num, net_npu_port_num, graph, port_mapping, separate_port_mapping
 
 if __name__ == "__main__":
+    import time
+    
+    # Multi-process protection (required for Windows systems).
+    mp.set_start_method('spawn', force=True)
+    
     topology_file = "./fattree_4_16g_2gps_100Gbps_H100_no_scale_up"
     
     graph, port_mapping, separate_port_mapping, switch_ids, aj_link, num_node, sw_num = parse_topology_with_ports(topology_file)
@@ -349,11 +430,55 @@ if __name__ == "__main__":
     print("switch Port Count:", switch_port_num)
     print("net_npu Port Count:", net_npu_port_num)
     
-    global_routing_table, global_routing_table_array, _ = build_global_routing_table_with_array(graph, port_mapping)
+    # Performance comparison: Serial version vs Parallel version
+    print("\n=== Performance comparison test ===")
     
+    # serial version
+    print("\n--- Run the serial version ---")
+    start_time = time.time()
+    global_routing_table_serial, global_routing_table_array_serial, next_hop_num_serial = build_global_routing_table_with_array(graph, port_mapping)
+    serial_time = time.time() - start_time
+    print(f"Execution time of the serial version: {serial_time:.2f} seconds")
+    
+    # Parallel version
+    print("\n--- Run the parallel version ---")
+    start_time = time.time()
+    global_routing_table_parallel, global_routing_table_array_parallel, next_hop_num_parallel = build_global_routing_table_with_array_parallel(graph, port_mapping)
+    parallel_time = time.time() - start_time
+    print(f"Execution time of the parallel version: {parallel_time:.2f} seconds")
+    
+    # Speedup ratio
+    if parallel_time > 0:
+        speedup = serial_time / parallel_time
+        print(f"Speedup ratio: {speedup:.2f}x")
+        
+        if speedup > 1:
+            print(f"The parallel version is faster than the serial version {((speedup - 1) * 100):.1f}%")
+        else:
+            print(f"he serial version is faster than the parallel version {((1/speedup - 1) * 100):.1f}%")
+    
+    # Verify result consistency
+    print("\n--- Verify result consistency ---")
+    results_match = (global_routing_table_serial == global_routing_table_parallel and 
+                    global_routing_table_array_serial == global_routing_table_array_parallel and
+                    next_hop_num_serial == next_hop_num_parallel)
+    
+    if results_match:
+        print("✓ The results of the serial and parallel versions are completely consistent")
+    else:
+        print("✗ Warning: The results of the serial and parallel versions are inconsistent")
+    
+    # Choose to use the serial result (as a reference)
+    global_routing_table, global_routing_table_array, _ = global_routing_table_serial, global_routing_table_array_serial, next_hop_num_serial
+    
+    # Display partial results
+    print("\n--- Routing table example ---")
     node_idx = 0
     for routing_table_array in global_routing_table_array:
         print("node: ", node_idx)
         node_idx += 1 
         for item in routing_table_array:
             print(item)
+        if node_idx >= 3:  # Only display the first 3 nodes to avoid excessive output
+            print("... (more nodes)")
+            break
