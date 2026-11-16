@@ -1,2 +1,0 @@
-/home/zhangran/work/madrona2/madrona_escape_room/external/madrona/external/madrona-toolchain/bundled-toolchain/toolchain/bin/llvm-ar qc libmad_escape_mgr.a CMakeFiles/mad_escape_mgr.dir/mgr.cpp.o
-/home/zhangran/work/madrona2/madrona_escape_room/external/madrona/external/madrona-toolchain/bundled-toolchain/toolchain/bin/llvm-ranlib libmad_escape_mgr.a

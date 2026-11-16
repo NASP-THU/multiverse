@@ -2,8 +2,6 @@
 
 //
 #include "sim.hpp"
-#include "2_fib_nexthop_init_mflow.hpp"
-#include "2_flow_mflow.hpp"
 //
 
 namespace madEscape {
@@ -12,829 +10,472 @@ using namespace madrona;
 using namespace madrona::math;
 using namespace madrona::phys;
 
-/*
-namespace consts {
-
-
-inline constexpr float doorWidth = consts::worldWidth / 3.f;
-
-}
-
-enum class RoomType : uint32_t {
-    SingleButton,
-    DoubleButton,
-    CubeBlocking,
-    CubeButtons,
-    NumTypes,
+// Helper structures for tensor parsing (from cpp_topo_fib_handler_example.cpp)
+struct CppTopoData {
+    // 标量值
+    uint32_t link_num;
+    uint32_t net_npu_num;
+    uint32_t sw_num;
+    uint32_t sw_port_num;
+    uint32_t net_npu_port_num;
+    uint32_t reserved;  // 预留字段
+    
+    // 数组数据 - 使用新的宏定义大小
+    int16_t aj_link[MAX_LINKS_NUM][5];                     // 5000个元素 (不变)
+    int16_t port_num[MAX_SW_NUM + MAX_NET_NPU_NUM];      // 1344个元素 (320+1024)
+    int16_t next_hop_port[MAX_ALL_PORT_NUM];             // 12288个元素 (320*32+1024*2)
+    
+    // 默认构造函数
+    CppTopoData() : link_num(0), net_npu_num(0), sw_num(0), 
+                    sw_port_num(0), net_npu_port_num(0), reserved(0) {
+        memset(aj_link, 0, sizeof(aj_link));
+        memset(port_num, 0, sizeof(port_num));
+        memset(next_hop_port, 0, sizeof(next_hop_port));
+    }
 };
 
-static inline float randInRangeCentered(Engine &ctx, float range)
-{
-    return ctx.data().rng.sampleUniform() * range - range / 2.f;
-}
-
-static inline float randBetween(Engine &ctx, float min, float max)
-{
-    return ctx.data().rng.sampleUniform() * (max - min) + min;
-}
-
-// Initialize the basic components needed for physics rigid body entities
-static inline void setupRigidBodyEntity(
-    Engine &ctx,
-    Entity e,
-    Vector3 pos,
-    Quat rot,
-    SimObject sim_obj,
-    EntityType entity_type,
-    ResponseType response_type = ResponseType::Dynamic,
-    Diag3x3 scale = {1, 1, 1})
-{
-    ObjectID obj_id { (int32_t)sim_obj };
-
-    ctx.get<Position>(e) = pos;
-    ctx.get<Rotation>(e) = rot;
-    ctx.get<Scale>(e) = scale;
-    ctx.get<ObjectID>(e) = obj_id;
-    ctx.get<Velocity>(e) = {
-        Vector3::zero(),
-        Vector3::zero(),
-    };
-    ctx.get<ResponseType>(e) = response_type;
-    ctx.get<ExternalForce>(e) = Vector3::zero();
-    ctx.get<ExternalTorque>(e) = Vector3::zero();
-    ctx.get<EntityType>(e) = entity_type;
-}
-
-// Register the entity with the broadphase system
-// This is needed for every entity with all the physics components.
-// Not registering an entity will cause a crash because the broadphase
-// systems will still execute over entities with the physics components.
-static void registerRigidBodyEntity(
-    Engine &ctx,
-    Entity e,
-    SimObject sim_obj)
-{
-    ObjectID obj_id { (int32_t)sim_obj };
-    ctx.get<broadphase::LeafID>(e) =
-        PhysicsSystem::registerEntity(ctx, e, obj_id);
-}
-
-// Creates floor, outer walls, and agent entities.
-// All these entities persist across all episodes.
-void createPersistentEntities(Engine &ctx)
-{
-    // Create the floor entity, just a simple static plane.
-    ctx.data().floorPlane = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        ctx.data().floorPlane,
-        Vector3 { 0, 0, 0 },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Plane,
-        EntityType::None, // Floor plane type should never be queried
-        ResponseType::Static);
-
-    // Create the outer wall entities
-    // Behind
-    ctx.data().borders[0] = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        ctx.data().borders[0],
-        Vector3 {
-            0,
-            -consts::wallWidth / 2.f,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Wall,
-        EntityType::Wall,
-        ResponseType::Static,
-        Diag3x3 {
-            consts::worldWidth + consts::wallWidth * 2,
-            consts::wallWidth,
-            2.f,
-        });
-
-    // Right
-    ctx.data().borders[1] = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        ctx.data().borders[1],
-        Vector3 {
-            consts::worldWidth / 2.f + consts::wallWidth / 2.f,
-            consts::worldLength / 2.f,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Wall,
-        EntityType::Wall,
-        ResponseType::Static,
-        Diag3x3 {
-            consts::wallWidth,
-            consts::worldLength,
-            2.f,
-        });
-
-    // Left
-    ctx.data().borders[2] = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        ctx.data().borders[2],
-        Vector3 {
-            -consts::worldWidth / 2.f - consts::wallWidth / 2.f,
-            consts::worldLength / 2.f,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Wall,
-        EntityType::Wall,
-        ResponseType::Static,
-        Diag3x3 {
-            consts::wallWidth,
-            consts::worldLength,
-            2.f,
-        });
-
-    // Create agent entities. Note that this leaves a lot of components
-    // uninitialized, these will be set during world generation, which is
-    // called for every episode.
-    // for (CountT i = 0; i < consts::numAgents; ++i) {
-    for (CountT i = 0; i < 1; ++i) {
-        Entity agent = ctx.data().agents[i] =
-            ctx.makeRenderableEntity<Agent>();
-
-        // Create a render view for the agent
-        if (ctx.data().enableRender) {
-            render::RenderingSystem::attachEntityToView(ctx,
-                    agent,
-                    100.f, 0.001f,
-                    1.5f * math::up);
-        }
-
-        ctx.get<Scale>(agent) = Diag3x3 { 1, 1, 1 };
-        ctx.get<ObjectID>(agent) = ObjectID { (int32_t)SimObject::Agent };
-        ctx.get<ResponseType>(agent) = ResponseType::Dynamic;
-        ctx.get<GrabState>(agent).constraintEntity = Entity::none();
-        ctx.get<EntityType>(agent) = EntityType::Agent;
-
-        ctx.get<CurStep>(agent).step = 0;
-
-    }
-
-    // Populate OtherAgents component, which maintains a reference to the
-    // other agents in the world for each agent.
-    // for (CountT i = 0; i < consts::numAgents; i++) {
-    for (CountT i = 0; i < 1; ++i) {
-        Entity cur_agent = ctx.data().agents[i];
-
-        OtherAgents &other_agents = ctx.get<OtherAgents>(cur_agent);
-        CountT out_idx = 0;
-        for (CountT j = 0; j < consts::numAgents; j++) {
-            if (i == j) {
-                continue;
+struct CppFibData {
+    // 数组数据 - 使用新的宏定义大小
+    int16_t fib[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM];          // 1344*1024*32 = 44,040,192个元素
+    int16_t next_hop_num[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_SW_NUM + MAX_NET_NPU_NUM];     // 1344*1024 = 1,376,256个元素
+    
+    // 默认构造函数
+    CppFibData() {
+        // 初始化fib为-1
+        for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+            for (int j = 0; j < MAX_SW_NUM + MAX_NET_NPU_NUM; j++) {
+                for (int k = 0; k < MAX_ONE_SW_PORT_NUM; k++) {
+                    fib[i][j][k] = -1;
+                }
+                next_hop_num[i][j] = 0;
             }
-
-            Entity other_agent = ctx.data().agents[j];
-            other_agents.e[out_idx++] = other_agent;
         }
     }
+};
 
-
-
-
-}
-
-// Although agents and walls persist between episodes, we still need to
-// re-register them with the broadphase system and, in the case of the agents,
-// reset their positions.
-static void resetPersistentEntities(Engine &ctx)
-{
-    registerRigidBodyEntity(ctx, ctx.data().floorPlane, SimObject::Plane);
-
-     for (CountT i = 0; i < 3; i++) {
-         Entity wall_entity = ctx.data().borders[i];
-         registerRigidBodyEntity(ctx, wall_entity, SimObject::Wall);
-     }
-
-     for (CountT i = 0; i < consts::numAgents; i++) {
-         Entity agent_entity = ctx.data().agents[i];
-         registerRigidBodyEntity(ctx, agent_entity, SimObject::Agent);
-
-         // Place the agents near the starting wall
-         Vector3 pos {
-             randInRangeCentered(ctx, 
-                 consts::worldWidth / 2.f - 2.5f * consts::agentRadius),
-             randBetween(ctx, consts::agentRadius * 1.1f,  2.f),
-             0.f,
-         };
-
-         if (i % 2 == 0) {
-             pos.x += consts::worldWidth / 4.f;
-         } else {
-             pos.x -= consts::worldWidth / 4.f;
-         }
-
-         ctx.get<Position>(agent_entity) = pos;
-         ctx.get<Rotation>(agent_entity) = Quat::angleAxis(
-             randInRangeCentered(ctx, math::pi / 4.f),
-             math::up);
-
-         auto &grab_state = ctx.get<GrabState>(agent_entity);
-         if (grab_state.constraintEntity != Entity::none()) {
-             ctx.destroyEntity(grab_state.constraintEntity);
-             grab_state.constraintEntity = Entity::none();
-         }
-
-         ctx.get<Progress>(agent_entity).maxY = pos.y;
-
-         ctx.get<Velocity>(agent_entity) = {
-             Vector3::zero(),
-             Vector3::zero(),
-         };
-         ctx.get<ExternalForce>(agent_entity) = Vector3::zero();
-         ctx.get<ExternalTorque>(agent_entity) = Vector3::zero();
-         ctx.get<Action>(agent_entity) = Action {
-             .moveAmount = 0,
-             .moveAngle = 0,
-             .rotate = consts::numTurnBuckets / 2,
-             .grab = 0,
-         };
-
-         ctx.get<StepsRemaining>(agent_entity).t = consts::episodeLen;
-     }
-}
-
-// Builds the two walls & door that block the end of the challenge room
-static void makeEndWall(Engine &ctx,
-                        Room &room,
-                        CountT room_idx)
-{
-    float y_pos = consts::roomLength * (room_idx + 1) -
-        consts::wallWidth / 2.f;
-
-    // Quarter door of buffer on both sides, place door and then build walls
-    // up to the door gap on both sides
-    float door_center = randBetween(ctx, 0.75f * consts::doorWidth, 
-        consts::worldWidth - 0.75f * consts::doorWidth);
-    float left_len = door_center - 0.5f * consts::doorWidth;
-    Entity left_wall = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        left_wall,
-        Vector3 {
-            (-consts::worldWidth + left_len) / 2.f,
-            y_pos,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Wall,
-        EntityType::Wall,
-        ResponseType::Static,
-        Diag3x3 {
-            left_len,
-            consts::wallWidth,
-            1.75f,
-        });
-    registerRigidBodyEntity(ctx, left_wall, SimObject::Wall);
-
-    float right_len =
-        consts::worldWidth - door_center - 0.5f * consts::doorWidth;
-    Entity right_wall = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        right_wall,
-        Vector3 {
-            (consts::worldWidth - right_len) / 2.f,
-            y_pos,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Wall,
-        EntityType::Wall,
-        ResponseType::Static,
-        Diag3x3 {
-            right_len,
-            consts::wallWidth,
-            1.75f,
-        });
-    registerRigidBodyEntity(ctx, right_wall, SimObject::Wall);
-
-    Entity door = ctx.makeRenderableEntity<DoorEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        door,
-        Vector3 {
-            door_center - consts::worldWidth / 2.f,
-            y_pos,
-            0,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Door,
-        EntityType::Door,
-        ResponseType::Static,
-        Diag3x3 {
-            consts::doorWidth * 0.8f,
-            consts::wallWidth,
-            1.75f,
-        });
-    registerRigidBodyEntity(ctx, door, SimObject::Door);
-    ctx.get<OpenState>(door).isOpen = false;
-
-    room.walls[0] = left_wall;
-    room.walls[1] = right_wall;
-    room.door = door;
-}
-
-static Entity makeButton(Engine &ctx,
-                         float button_x,
-                         float button_y)
-{
-    Entity button = ctx.makeRenderableEntity<ButtonEntity>();
-    ctx.get<Position>(button) = Vector3 {
-        button_x,
-        button_y,
-        0.f,
-    };
-    ctx.get<Rotation>(button) = Quat { 1, 0, 0, 0 };
-    ctx.get<Scale>(button) = Diag3x3 {
-        consts::buttonWidth,
-        consts::buttonWidth,
-        0.2f,
-    };
-    ctx.get<ObjectID>(button) = ObjectID { (int32_t)SimObject::Button };
-    ctx.get<ButtonState>(button).isPressed = false;
-    ctx.get<EntityType>(button) = EntityType::Button;
-
-    return button;
-}
-
-static Entity makeCube(Engine &ctx,
-                       float cube_x,
-                       float cube_y,
-                       float scale = 1.f)
-{
-    Entity cube = ctx.makeRenderableEntity<PhysicsEntity>();
-    setupRigidBodyEntity(
-        ctx,
-        cube,
-        Vector3 {
-            cube_x,
-            cube_y,
-            1.f * scale,
-        },
-        Quat { 1, 0, 0, 0 },
-        SimObject::Cube,
-        EntityType::Cube,
-        ResponseType::Dynamic,
-        Diag3x3 {
-            scale,
-            scale,
-            scale,
-        });
-    registerRigidBodyEntity(ctx, cube, SimObject::Cube);
-
-    return cube;
-}
-
-static void setupDoor(Engine &ctx,
-                      Entity door,
-                      Span<const Entity> buttons,
-                      bool is_persistent)
-{
-    DoorProperties &props = ctx.get<DoorProperties>(door);
-
-    for (CountT i = 0; i < buttons.size(); i++) {
-        props.buttons[i] = buttons[i];
+// Helper function to parse topo tensor (from cpp_topo_fib_handler_example.cpp)
+inline bool parse_topo_tensor(const TopoTensor& tensor, CppTopoData& topo_data) {
+    const int32_t* flat_data = tensor.data;
+    
+    // 解析标量值 (前6个元素)
+    topo_data.link_num = static_cast<uint32_t>(flat_data[0]);
+    topo_data.net_npu_num = static_cast<uint32_t>(flat_data[1]);
+    topo_data.sw_num = static_cast<uint32_t>(flat_data[2]);
+    topo_data.sw_port_num = static_cast<uint32_t>(flat_data[3]);
+    topo_data.net_npu_port_num = static_cast<uint32_t>(flat_data[4]);
+    topo_data.reserved = static_cast<uint32_t>(flat_data[5]);
+    
+    int idx = 6;
+    
+    // parse aj_link[1000][5] - 5000 elements
+    for (int i = 0; i < MAX_LINKS_NUM; i++) {
+        for (int j = 0; j < 5; j++) {
+            topo_data.aj_link[i][j] = static_cast<int16_t>(flat_data[idx++]);
+        }
     }
-    props.numButtons = (int32_t)buttons.size();
-    props.isPersistent = is_persistent;
-}
-
-// A room with a single button that needs to be pressed, the door stays open.
-static CountT makeSingleButtonRoom(Engine &ctx,
-                                   Room &room,
-                                   float y_min,
-                                   float y_max)
-{
-    float button_x = randInRangeCentered(ctx,
-        consts::worldWidth / 2.f - consts::buttonWidth);
-    float button_y = randBetween(ctx, y_min + consts::roomLength / 4.f,
-        y_max - consts::wallWidth - consts::buttonWidth / 2.f);
-
-    Entity button = makeButton(ctx, button_x, button_y);
-
-    setupDoor(ctx, room.door, { button }, true);
-
-    room.entities[0] = button;
-
-    return 1;
-}
-
-// A room with two buttons that need to be pressed simultaneously,
-// the door stays open.
-static CountT makeDoubleButtonRoom(Engine &ctx,
-                                   Room &room,
-                                   float y_min,
-                                   float y_max)
-{
-    float a_x = randBetween(ctx,
-        -consts::worldWidth / 2.f + consts::buttonWidth,
-        -consts::buttonWidth);
-
-    float a_y = randBetween(ctx,
-        y_min + consts::roomLength / 4.f,
-        y_max - consts::wallWidth - consts::buttonWidth / 2.f);
-
-    Entity a = makeButton(ctx, a_x, a_y);
-
-    float b_x = randBetween(ctx,
-        consts::buttonWidth,
-        consts::worldWidth / 2.f - consts::buttonWidth);
-
-    float b_y = randBetween(ctx,
-        y_min + consts::roomLength / 4.f,
-        y_max - consts::wallWidth - consts::buttonWidth / 2.f);
-
-    Entity b = makeButton(ctx, b_x, b_y);
-
-    setupDoor(ctx, room.door, { a, b }, true);
-
-    room.entities[0] = a;
-    room.entities[1] = b;
-
-    return 2;
-}
-
-// This room has 3 cubes blocking the exit door as well as two buttons.
-// The agents either need to pull the middle cube out of the way and
-// open the door or open the door with the buttons and push the cubes
-// into the next room.
-static CountT makeCubeBlockingRoom(Engine &ctx,
-                                   Room &room,
-                                   float y_min,
-                                   float y_max)
-{
-    float button_a_x = randBetween(ctx,
-        -consts::worldWidth / 2.f + consts::buttonWidth,
-        -consts::buttonWidth - consts::worldWidth / 4.f);
-
-    float button_a_y = randBetween(ctx,
-        y_min + consts::buttonWidth,
-        y_max - consts::roomLength / 4.f);
-
-    Entity button_a = makeButton(ctx, button_a_x, button_a_y);
-
-    float button_b_x = randBetween(ctx,
-        consts::buttonWidth + consts::worldWidth / 4.f,
-        consts::worldWidth / 2.f - consts::buttonWidth);
-
-    float button_b_y = randBetween(ctx,
-        y_min + consts::buttonWidth,
-        y_max - consts::roomLength / 4.f);
-
-    Entity button_b = makeButton(ctx, button_b_x, button_b_y);
-
-    setupDoor(ctx, room.door, { button_a, button_b }, true);
-
-    Vector3 door_pos = ctx.get<Position>(room.door);
-
-    float cube_a_x = door_pos.x - 3.f;
-    float cube_a_y = door_pos.y - 2.f;
-
-    Entity cube_a = makeCube(ctx, cube_a_x, cube_a_y, 1.5f);
-
-    float cube_b_x = door_pos.x;
-    float cube_b_y = door_pos.y - 2.f;
-
-    Entity cube_b = makeCube(ctx, cube_b_x, cube_b_y, 1.5f);
-
-    float cube_c_x = door_pos.x + 3.f;
-    float cube_c_y = door_pos.y - 2.f;
-
-    Entity cube_c = makeCube(ctx, cube_c_x, cube_c_y, 1.5f);
-
-    room.entities[0] = button_a;
-    room.entities[1] = button_b;
-    room.entities[2] = cube_a;
-    room.entities[3] = cube_b;
-    room.entities[4] = cube_c;
-
-    return 5;
-}
-
-// This room has 2 buttons and 2 cubes. The buttons need to remain pressed
-// for the door to stay open. To progress, the agents must push at least one
-// cube onto one of the buttons, or more optimally, both.
-static CountT makeCubeButtonsRoom(Engine &ctx,
-                                  Room &room,
-                                  float y_min,
-                                  float y_max)
-{
-    float button_a_x = randBetween(ctx,
-        -consts::worldWidth / 2.f + consts::buttonWidth,
-        -consts::buttonWidth - consts::worldWidth / 4.f);
-
-    float button_a_y = randBetween(ctx,
-        y_min + consts::buttonWidth,
-        y_max - consts::roomLength / 4.f);
-
-    Entity button_a = makeButton(ctx, button_a_x, button_a_y);
-
-    float button_b_x = randBetween(ctx,
-        consts::buttonWidth + consts::worldWidth / 4.f,
-        consts::worldWidth / 2.f - consts::buttonWidth);
-
-    float button_b_y = randBetween(ctx,
-        y_min + consts::buttonWidth,
-        y_max - consts::roomLength / 4.f);
-
-    Entity button_b = makeButton(ctx, button_b_x, button_b_y);
-
-    setupDoor(ctx, room.door, { button_a, button_b }, false);
-
-    float cube_a_x = randBetween(ctx,
-        -consts::worldWidth / 4.f,
-        -1.5f);
-
-    float cube_a_y = randBetween(ctx,
-        y_min + 2.f,
-        y_max - consts::wallWidth - 2.f);
-
-    Entity cube_a = makeCube(ctx, cube_a_x, cube_a_y, 1.5f);
-
-    float cube_b_x = randBetween(ctx,
-        1.5f,
-        consts::worldWidth / 4.f);
-
-    float cube_b_y = randBetween(ctx,
-        y_min + 2.f,
-        y_max - consts::wallWidth - 2.f);
-
-    Entity cube_b = makeCube(ctx, cube_b_x, cube_b_y, 1.5f);
-
-    room.entities[0] = button_a;
-    room.entities[1] = button_b;
-    room.entities[2] = cube_a;
-    room.entities[3] = cube_b;
-
-    return 4;
-}
-
-// Make the doors and separator walls at the end of the room
-// before delegating to specific code based on room_type.
-static void makeRoom(Engine &ctx,
-                     LevelState &level,
-                     CountT room_idx,
-                     RoomType room_type)
-{
-    Room &room = level.rooms[room_idx];
-    makeEndWall(ctx, room, room_idx);
-
-    float room_y_min = room_idx * consts::roomLength;
-    float room_y_max = (room_idx + 1) * consts::roomLength;
-
-    CountT num_room_entities;
-    switch (room_type) {
-    case RoomType::SingleButton: {
-        num_room_entities =
-            makeSingleButtonRoom(ctx, room, room_y_min, room_y_max);
-    } break;
-    case RoomType::DoubleButton: {
-        num_room_entities =
-            makeDoubleButtonRoom(ctx, room, room_y_min, room_y_max);
-    } break;
-    case RoomType::CubeBlocking: {
-        num_room_entities =
-            makeCubeBlockingRoom(ctx, room, room_y_min, room_y_max);
-    } break;
-    case RoomType::CubeButtons: {
-        num_room_entities =
-            makeCubeButtonsRoom(ctx, room, room_y_min, room_y_max);
-    } break;
-    default: MADRONA_UNREACHABLE();
+    
+    // parse port_num[MAX_NODES] - MAX_NODES elements
+    for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+        topo_data.port_num[i] = static_cast<int16_t>(flat_data[idx++]);
     }
-
-    // Need to set any extra entities to type none so random uninitialized data
-    // from prior episodes isn't exported to pytorch as agent observations.
-    for (CountT i = num_room_entities; i < consts::maxEntitiesPerRoom; i++) {
-        room.entities[i] = Entity::none();
+    
+    // parse next_hop_port[MAX_ALL_PORT_NUM] - MAX_ALL_PORT_NUM elements
+    for (int i = 0; i < MAX_ALL_PORT_NUM; i++) {
+        topo_data.next_hop_port[i] = static_cast<int16_t>(flat_data[idx++]);
     }
+    
+    return true;
 }
 
-static void generateLevel(Engine &ctx)
-{
-    LevelState &level = ctx.singleton<LevelState>();
-
-    // For training simplicity, define a fixed sequence of levels.
-    makeRoom(ctx, level, 0, RoomType::DoubleButton);
-    makeRoom(ctx, level, 1, RoomType::CubeBlocking);
-    makeRoom(ctx, level, 2, RoomType::CubeButtons);
-
-#if 0
-    // An alternative implementation could randomly select the type for each
-    // room rather than a fixed progression of challenge difficulty
-    for (CountT i = 0; i < consts::numRooms; i++) {
-        RoomType room_type = (RoomType)(
-            ctx.data().rng.sampleI32(0, (uint32_t)RoomType::NumTypes));
-
-        makeRoom(ctx, level, i, room_type);
+// Helper function to parse fib tensor (from cpp_topo_fib_handler_example.cpp)
+inline bool parse_fib_tensor(const FibTensor& tensor, CppFibData& fib_data) {
+    const int32_t* flat_data = tensor.data;
+    
+    int idx = 0;
+    
+    // parse fib[MAX_NODES][MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM] - using macro definition size
+    for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+        for (int j = 0; j < MAX_SW_NUM + MAX_NET_NPU_NUM; j++) {
+            for (int k = 0; k < MAX_ONE_SW_PORT_NUM; k++) {
+                fib_data.fib[i][j][k] = static_cast<int16_t>(flat_data[idx++]);
+            }
+        }
     }
-#endif
+    
+    // parse next_hop_num[MAX_NODES][MAX_NET_NPU_NUM] - using macro definition size
+    for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+        for (int j = 0; j < MAX_SW_NUM + MAX_NET_NPU_NUM; j++) {
+            fib_data.next_hop_num[i][j] = static_cast<int16_t>(flat_data[idx++]);
+        }
+    }
+    
+    return true;
 }
 
-// Randomly generate a new world for a training episode
-void generateWorld(Engine &ctx)
-{
-    resetPersistentEntities(ctx);
-    generateLevel(ctx);
+// Global variable to store the tensor Agent entity
+static Entity tensor_agent_entity = Entity::none();
+
+// Function to create Agent entity early for tensor access
+void create_agent_for_tensor_access(Engine &ctx) {
+    // Create Agent entity to enable tensor access from Python
+    tensor_agent_entity = ctx.makeEntity<Agent>();
+    
+    // Initialize the tensor components with default data
+    TopoTensor &topo_tensor = ctx.get<TopoTensor>(tensor_agent_entity);
+    FibTensor &fib_tensor = ctx.get<FibTensor>(tensor_agent_entity);
+    
+    // Initialize with default values using memset for better performance
+    memset(topo_tensor.data, 0, sizeof(topo_tensor.data));
+    // printf("  initialize FibTensor...\n ");
+    memset(fib_tensor.data, -1, sizeof(fib_tensor.data));
+    
+    printf("  Agent entity created for tensor access. Python can now access tensors.\n");
 }
 
+// // New function to initialize ctx.data from tensors
+// void initialize_ctx_data_from_tensors(Engine &ctx) {
+//     printf("=== initialize_ctx_data_from_tensors: START ===\n");
+    
+//     // Get the existing agent entity from global variable
+//     Entity agent_entity = tensor_agent_entity;
+    
+//     printf("Agent entity retrieved: %s\n", agent_entity != Entity::none() ? "Valid" : "Invalid");
+    
+//     if (agent_entity == Entity::none()) {
+//         printf("ERROR: Cannot access tensor components - invalid agent entity\n");
+//         return;
+//     }
+    
+//     printf("Attempting to access tensor components...\n");
+    
+//     // Get tensor components from the existing Agent entity with error checking
+//     TopoTensor &topo_tensor = ctx.get<TopoTensor>(agent_entity);
+//     FibTensor &fib_tensor = ctx.get<FibTensor>(agent_entity);
+    
+//     printf("Tensor components accessed successfully\n");
+//     printf("  TopoTensor data ptr: %s\n", topo_tensor.data ? "Valid" : "NULL");
+//     printf("  FibTensor data ptr: %s\n", fib_tensor.data ? "Valid" : "NULL");
+        
+//     // Try to parse the tensor data
+//     CppTopoData topo_data;
+//     CppFibData fib_data;
+    
+//     // Check if tensor data has been updated from Python
+//     bool has_topo_data = false;
+//     bool has_fib_data = false;
+    
+//     printf("Checking for topo tensor data...\n");
+//     // Check if topo tensor has data (first few elements non-zero)
+//     for (int i = 0; i < 6; i++) {
+//         printf("  topo_tensor.data[%d] = %d\n", i, topo_tensor.data[i]);
+//         if (topo_tensor.data[i] != 0) {
+//             has_topo_data = true;
+//         }
+//     }
+    
+//     printf("Checking for fib tensor data...\n");
+//     // Check if fib tensor has data (first few elements not -1)
+//     for (int i = 0; i < 10; i++) {
+//         printf("  fib_tensor.data[%d] = %d\n", i, fib_tensor.data[i]);
+//         if (fib_tensor.data[i] != -1) {
+//             has_fib_data = true;
+//         }
+//     }
+    
+//     printf("Data availability check results:\n");
+//     printf("  has_topo_data: %s\n", has_topo_data ? "Yes" : "No");
+//     printf("  has_fib_data: %s\n", has_fib_data ? "Yes" : "No");
+    
+//     if (has_topo_data || has_fib_data) {
+//         printf("Found tensor data from Agent entity, processing...\n");
+        
+//         // Parse topo tensor
+//         if (has_topo_data) {
+//             printf("Parsing topo tensor...\n");
+//             if (!parse_topo_tensor(topo_tensor, topo_data)) {
+//                 printf("Error: Failed to parse topo tensor from agent entity\n");
+//                 has_topo_data = false;
+//             } else {
+//                 printf("Topo tensor parsed successfully\n");
+//                 printf("  Parsed - link_num: %u, net_npu_num: %u, sw_num: %u\n",
+//                        topo_data.link_num, topo_data.net_npu_num, topo_data.sw_num);
+//             }
+//         }
+        
+//         // Parse fib tensor
+//         if (has_fib_data) {
+//             printf("Parsing fib tensor...\n");
+//             if (!parse_fib_tensor(fib_tensor, fib_data)) {
+//                 printf("Error: Failed to parse fib tensor from agent entity\n");
+//                 has_fib_data = false;
+//             } else {
+//                 printf("Fib tensor parsed successfully\n");
+//                 printf("  Sample fib data: [%d, %d, %d, %d]\n",
+//                        fib_data.fib[0][1][0], fib_data.fib[0][1][1], 
+//                        fib_data.fib[0][1][2], fib_data.fib[0][1][3]);
+//             }
+//         }
+        
+//         // Update ctx.data with parsed tensor data
+//         if (has_topo_data) {
+//             printf("Updating ctx.data with parsed topo data...\n");
+//             ctx.data().num_link = topo_data.link_num;
+//             ctx.data().num_net_npu = topo_data.net_npu_num;
+//             ctx.data().num_switch = topo_data.sw_num;
+//             ctx.data().sw_port_num = topo_data.sw_port_num;
+//             ctx.data().net_npu_port_num = topo_data.net_npu_port_num;
+            
+//             // Copy aj_link array
+//             for (int i = 0; i < 1000; i++) {
+//                 for (int j = 0; j < 5; j++) {
+//                     ctx.data().aj_link[i][j] = static_cast<uint16_t>(topo_data.aj_link[i][j]);
+//                 }
+//             }
+            
+//             // Copy port_num array
+//             for (int i = 0; i < (MAX_SW_NUM + MAX_NET_NPU_NUM); i++) {
+//                 ctx.data().port_num[i] = topo_data.port_num[i];
+//             }
+            
+//             // Copy next_hop_port array
+//             for (int i = 0; i < MAX_ALL_PORT_NUM; i++) {
+//                 ctx.data().next_hop_port[i] = topo_data.next_hop_port[i];
+//             }
+            
+//             printf("  Topo data updated from tensor successfully\n");
+//         }
+        
+//         // Assign parsed fib data to ctx
+//         if (has_fib_data) {
+//             printf("Updating ctx.data with parsed fib data...\n");
+//             for (int i = 0; i < (MAX_SW_NUM + MAX_NET_NPU_NUM); i++) {
+//                 for (int j = 0; j < MAX_NET_NPU_NUM; j++) {
+//                     for (int k = 0; k < MAX_ONE_SW_PORT_NUM; k++) {
+//                         ctx.data().fib[i][j][k] = fib_data.fib[i][j][k];
+//                     }
+//                     ctx.data().next_hop_num[i][j] = fib_data.next_hop_num[i][j];
+//                 }
+//             }
+            
+//             printf("  Fib data updated from tensor successfully\n");
+//         }
+        
+//         printf("Final ctx.data state after tensor update:\n");
+//         printf("  num_link: %u, num_net_npu: %u, num_switch: %u\n", 
+//                ctx.data().num_link, ctx.data().num_net_npu, ctx.data().num_switch);
+//         printf("  sw_port_num: %u, net_npu_port_num: %u\n", 
+//                ctx.data().sw_port_num, ctx.data().net_npu_port_num);
+//         printf("  Sample aj_link[0]: [%u, %u, %u, %u, %u]\n", 
+//                ctx.data().aj_link[0][0], ctx.data().aj_link[0][1], 
+//                ctx.data().aj_link[0][2], ctx.data().aj_link[0][3], ctx.data().aj_link[0][4]);
+//         printf("  Sample fib[0][1]: [%d, %d, %d, %d]\n", 
+//                ctx.data().fib[0][1][0], ctx.data().fib[0][1][1], 
+//                ctx.data().fib[0][1][2], ctx.data().fib[0][1][3]);
+               
+//     } else {
+//         printf("No tensor data found in Agent entity - using existing ctx.data\n");
+//         printf("Current ctx.data state:\n");
+//         printf("  num_link: %u, num_net_npu: %u, num_switch: %u\n", 
+//                ctx.data().num_link, ctx.data().num_net_npu, ctx.data().num_switch);
+//     }
+    
+//     printf("=== initialize_ctx_data_from_tensors: END ===\n");
+// }
 
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void generate_switch(Engine &ctx, CountT k_ary)
+void new_generate_switch(Engine &ctx)
 {
-    CountT num_edge_switch = k_ary*k_ary/2;
-    CountT num_aggr_switch = k_ary*k_ary/2; // the number of aggragate switch
-    CountT num_core_switch = k_ary*k_ary/4;
+    uint32_t num_net_npu = ctx.data().num_net_npu;
+    uint32_t num_switch = ctx.data().num_switch;
+    uint32_t num_host = ctx.data().num_net_npu;
+    uint32_t num_net_npu_port = ctx.data().net_npu_port_num;
 
-    CountT num_host = k_ary*k_ary*k_ary/4;
-    CountT num_next_hop = k_ary;
+    int16_t *port_num = ctx.data().port_num;
 
-    printf("*******generate_switch*******\n");
-    // build edge switch
-    for (uint32_t i = 0; i < num_edge_switch; i++) {
+    int16_t (*next_hop_num)[MAX_SW_NUM + MAX_NET_NPU_NUM] = ctx.data().next_hop_num; // Correct type initialization
+    int16_t (*fib)[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM] = ctx.data().fib; // Correct type initialization
+
+    int16_t num_next_hop = MAX_ONE_SW_PORT_NUM;
+
+    printf("    *******generate_switch*******\n");
+
+    uint32_t start_port_idx = 0;
+    uint32_t sw_cnt = 0;
+    for (uint32_t sw_id = num_net_npu; sw_id < num_switch+num_net_npu; sw_id++) {
         Entity e_switch = ctx.makeEntity<Switch>();
         printf("");
-        ctx.get<SwitchType>(e_switch) = SwitchType::Edge;
-        ctx.get<SwitchID>(e_switch).switch_id = i;
-
-        for (uint32_t j = 0; j < num_host; j++) {
-            for (uint32_t k = 0; k < num_next_hop; k++) {
-                ctx.get<FIBTable>(e_switch).fib_table[j][k] = central_fib_table[i][j][k];
-            }
-        }
-        
-        ctx.get<QueueNumPerPort>(e_switch).queue_num_per_port = QUEUE_NUM;
-
-        ctx.data()._switches[ctx.data().numSwitch++] = e_switch;
-    }
-
-    // build aggragate switch
-    for (uint32_t i = 0; i < num_aggr_switch; i++) {
-        Entity e_switch = ctx.makeEntity<Switch>();
-        ctx.get<SwitchType>(e_switch) = SwitchType::Aggr;
-        ctx.get<SwitchID>(e_switch).switch_id = i+num_edge_switch;
-
-        for (uint32_t j = 0; j < num_host; j++) {
-            for (uint32_t k = 0; k < num_next_hop; k++) {
-                ctx.get<FIBTable>(e_switch).fib_table[j][k] = central_fib_table[i+num_edge_switch][j][k];
-            }
-        }
-
-        ctx.get<QueueNumPerPort>(e_switch).queue_num_per_port = QUEUE_NUM;
-
-        ctx.data()._switches[ctx.data().numSwitch++] = e_switch;
-    }
-
-    // build core switch
-    for (uint32_t i = 0; i < num_core_switch; i++) {
-        Entity e_switch = ctx.makeEntity<Switch>();
         ctx.get<SwitchType>(e_switch) = SwitchType::Core;
-        ctx.get<SwitchID>(e_switch).switch_id = i + num_edge_switch + num_aggr_switch;
+        ctx.get<SwitchID>(e_switch).switch_id = sw_cnt;
 
-        for (uint32_t j = 0; j < num_host; j++) {
+        for (uint32_t j = 0; j < num_host + num_switch; j++) {
             for (uint32_t k = 0; k < num_next_hop; k++) {
-                ctx.get<FIBTable>(e_switch).fib_table[j][k] = central_fib_table[i+num_edge_switch+num_aggr_switch][j][k];
+                ctx.get<FIBTable>(e_switch).fib_table[j][k] = fib[sw_id][j][k];
             }
         }
 
+        // // Print fib_table if sw_cnt == 1
+        // if (sw_cnt == 0) {
+        //     printf("FIBTable for switch %d:\n", sw_cnt);
+        //     for (uint32_t j = 0; j < num_host + num_switch; j++) {
+        //         printf("Row %d: ", j);
+        //         for (uint32_t k = 0; k < num_next_hop; k++) {
+        //             printf("%d ", ctx.get<FIBTable>(e_switch).fib_table[j][k]);
+        //         }
+        //         printf("\n");
+        //     }
+        // }
+
         ctx.get<QueueNumPerPort>(e_switch).queue_num_per_port = QUEUE_NUM;
+
+        ctx.get<StartPortID>(e_switch).start_port_id = start_port_idx;
+        ctx.get<StopPortID>(e_switch).stop_port_id = start_port_idx + port_num[sw_id]-1;
+        ctx.get<PortNum>(e_switch).port_num = port_num[sw_id];
+
+        ctx.data()._switches[sw_cnt++] = e_switch;
         
-        ctx.data()._switches[ctx.data().numSwitch++] = e_switch;
+        start_port_idx += port_num[sw_id];
     }
-    //printf("\n");
-    printf("Total %d switches, %d in_ports, %d e_ports\n", \
-           ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort);
+
+    printf("    Total %d switches\n", ctx.data().num_switch);
 }
 
 
-void generate_in_port(Engine &ctx, CountT k_ary)
+void new_generate_in_port(Engine &ctx)
 {
-    CountT num_edge_switch = k_ary*k_ary/2;
-    CountT num_aggr_switch = k_ary*k_ary/2; // the number of aggragate switch
-    CountT num_core_switch = k_ary*k_ary/4;
+    uint32_t num_net_npu = ctx.data().num_net_npu;
+    uint32_t num_switch = ctx.data().num_switch;
 
-    printf("*******Generate in ports*******\n");
-    // ingress_ports for edge switch
+    uint32_t num_sw_port = ctx.data().sw_port_num;
+
+    int16_t *port_num = ctx.data().port_num;
+
     ctx.data().numInPort = 0;
-    for (uint32_t i = 0; i < num_edge_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
+    printf("    *******Generate in ports*******\n");
+    uint32_t global_port_id = 0;
+    // uint32_t start_port_idx = 0;
+    for (uint32_t sw_id = num_net_npu; sw_id < num_switch+num_net_npu; sw_id++) {
+
+        for (uint32_t local_port_id = 0; local_port_id < port_num[sw_id]; local_port_id++) {
             Entity in_port = ctx.makeEntity<IngressPort>();
             ctx.get<PortType>(in_port) = PortType::InPort;
-            ctx.get<LocalPortID>(in_port).local_port_id = j;
-            ctx.get<GlobalPortID>(in_port).global_port_id = i*k_ary+j;
+            ctx.get<LocalPortID>(in_port).local_port_id = local_port_id;
+            ctx.get<GlobalPortID>(in_port).global_port_id = global_port_id;
 
             ctx.get<PktBuf>(in_port).head = 0;
             ctx.get<PktBuf>(in_port).tail = 0;
             ctx.get<PktBuf>(in_port).cur_num = 0;
             ctx.get<PktBuf>(in_port).cur_bytes = 0;
 
-            ctx.get<SwitchID>(in_port).switch_id = i;
-            
-            ctx.get<SimTime>(in_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(in_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
-
-            ctx.data().inPorts[ctx.data().numInPort++] = in_port;
-        }
-    }
-
-    // ingress_ports for aggragate switch
-    for (uint32_t i = 0; i < num_aggr_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
-            Entity in_port = ctx.makeEntity<IngressPort>();
-            ctx.get<PortType>(in_port) = PortType::InPort;
-            ctx.get<LocalPortID>(in_port).local_port_id = j;
-            ctx.get<GlobalPortID>(in_port).global_port_id = (num_edge_switch+i)*k_ary+j;
-
-            ctx.get<PktBuf>(in_port).head = 0;
-            ctx.get<PktBuf>(in_port).tail = 0;
-            ctx.get<PktBuf>(in_port).cur_num = 0;
-            ctx.get<PktBuf>(in_port).cur_bytes = 0;
-
-            ctx.get<SwitchID>(in_port).switch_id = i + num_edge_switch;
-
-            // printf("switch_id: %d, local_port_id: %d, global_port_id: %d\n", \
-            //         ctx.get<SwitchID>(in_port).switch_id, ctx.get<LocalPortID>(in_port).local_port_id, \
-            //         ctx.get<GlobalPortID>(in_port).global_port_id);
+            ctx.get<SwitchID>(in_port).switch_id = sw_id-num_net_npu;
 
             ctx.get<SimTime>(in_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(in_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
+            ctx.get<SimTimePerUpdate>(in_port).sim_time_per_update = LOOKAHEAD_TIME; // 1000ns
 
             ctx.data().inPorts[ctx.data().numInPort++] = in_port;
+            global_port_id++;
         }
     }
-
-    // ingress_ports for core switch
-    for (uint32_t i = 0; i < num_core_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
-            Entity in_port = ctx.makeEntity<IngressPort>();
-            ctx.get<PortType>(in_port) = PortType::InPort;
-            ctx.get<LocalPortID>(in_port).local_port_id = j;
-            ctx.get<GlobalPortID>(in_port).global_port_id = (num_edge_switch+num_aggr_switch+i)*k_ary+j;
-
-            ctx.get<PktBuf>(in_port).head = 0;
-            ctx.get<PktBuf>(in_port).tail = 0;
-            ctx.get<PktBuf>(in_port).cur_num = 0;
-            ctx.get<PktBuf>(in_port).cur_bytes = 0;
-
-            ctx.get<SwitchID>(in_port).switch_id = i + num_edge_switch + num_aggr_switch;
-
-            ctx.get<SimTime>(in_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(in_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
-
-            ctx.data().inPorts[ctx.data().numInPort++] = in_port;
-        }
-    }
-
-    printf("Total %d switches, %d in_ports, %d e_ports\n", \
-           ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort);
 }
 
 
-void generate_e_port(Engine &ctx, CountT k_ary)
+
+void new_generate_egress_port_and_nic(Engine &ctx) 
 {
-    CountT num_edge_switch = k_ary*k_ary/2;
-    CountT num_aggr_switch = k_ary*k_ary/2; // the number of aggragate switch
-    CountT num_core_switch = k_ary*k_ary/4;
+    printf("    enter generate_egress_port_and_nic\n");
+    // uint32_t limit = ctx.data().net_npu_port_num + ctx.data().sw_port_num;
+    // printf("Printing next_hop_port (first %u elements):\n", limit);
+    // for (uint32_t i = 0; i < limit; i++) {
+    //     printf("next_hop_port[%u] = %d\n", i, ctx.data().next_hop_port[i]);
+    // }
 
-    printf("*******Generate egress ports*******\n");
-    // egress_ports for edge switch
+    uint16_t (*link)[5] = ctx.data().aj_link;
+    int16_t *next_hop_port = ctx.data().next_hop_port;
 
-    ctx.data().numEPort = 0;
-    for (uint32_t i = 0; i < num_edge_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
+    uint32_t num_sw_port = ctx.data().sw_port_num;
+    uint32_t num_net_npu_port = ctx.data().net_npu_port_num;
+
+    uint32_t num_link = ctx.data().num_link;
+    uint32_t num_net_npu = ctx.data().num_net_npu;
+    
+    uint32_t global_nic_cnt = 0;
+    uint32_t local_nic_cnt = 0;
+
+    uint32_t local_port_cnt = 0;
+    uint32_t global_port_cnt = 0;
+
+    uint32_t prev_src_node = 0; // A end of the previous link
+    uint32_t cur_src_node = 0; // A end of the current link
+
+    for (uint32_t idx = 0; idx < num_link; idx++) {
+        cur_src_node = link[idx][0];
+
+        if (link[idx][0] < num_net_npu) { // host<-->switch
+            if (prev_src_node != cur_src_node) {
+                // local_nic_cnt = 0;
+            }
+            Entity nic_e = ctx.makeEntity<NIC>();
+            ctx.get<NIC_ID>(nic_e).nic_id = global_nic_cnt;
+    
+            // printf("MountedFlows\n");
+            ctx.get<MountedFlows>(nic_e).head = 0;
+            ctx.get<MountedFlows>(nic_e).tail = 0;
+            ctx.get<MountedFlows>(nic_e).cur_num = 0;
+    
+            // printf("BidPktBuf\n");
+            ctx.get<BidPktBuf>(nic_e).snd_buf.head = 0;
+            ctx.get<BidPktBuf>(nic_e).snd_buf.tail = 0;
+            ctx.get<BidPktBuf>(nic_e).snd_buf.cur_num = 0;
+            ctx.get<BidPktBuf>(nic_e).snd_buf.cur_bytes = 0;
+    
+            ctx.get<BidPktBuf>(nic_e).recv_buf.head = 0;
+            ctx.get<BidPktBuf>(nic_e).recv_buf.tail = 0;
+            ctx.get<BidPktBuf>(nic_e).recv_buf.cur_num = 0;
+            ctx.get<BidPktBuf>(nic_e).recv_buf.cur_bytes = 0;
+    
+            // printf("TXHistory\n");
+            ctx.get<TXHistory>(nic_e).head = 0;
+            ctx.get<TXHistory>(nic_e).tail = 0;
+            ctx.get<TXHistory>(nic_e).cur_num = 0;
+            ctx.get<TXHistory>(nic_e).cur_bytes = 0;
+    
+            // printf("NextHopType\n");
+            ctx.get<NextHopType>(nic_e) = NextHopType::SWITCH;
+    
+            // printf("HSLinkDelay\n");
+            ctx.get<HSLinkDelay>(nic_e).HS_link_delay = link[idx][4]; //unit is nanosecond 
+            // printf("NICRate\n");       
+            ctx.get<NICRate>(nic_e).nic_rate = 1000LL*1000*1000*link[idx][3]; //unit is Gbps 
+            // printf("ett_idx\n");  
+    
+            // printf("NextHop\n");
+            // TODO
+            // uint32_t ett_nic_idx = ctx.data().num_nic;
+            ctx.get<NextHop>(nic_e).next_hop = next_hop_port[global_nic_cnt];
+            //
+    
+            // printf("SimTime\n");
+            ctx.get<SimTime>(nic_e).sim_time = 0;
+    
+            ctx.get<Seed>(nic_e).seed = cur_src_node;
+            ctx.get<SimTimePerUpdate>(nic_e).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
+            
+            ctx.data()._nics[ctx.data().num_nic] = nic_e;
+
+            ctx.data().num_nic++;
+            // local_nic_cnt++;
+            global_nic_cnt++;
+
+            // printf("node_id:%d, nic_id: %d, next_hop: %d\n", cur_src_node, ctx.get<NIC_ID>(nic_e).nic_id, ctx.get<NextHop>(nic_e).next_hop); 
+        }
+        else { // switch<-->host and switch<-->switch
+            if (prev_src_node != cur_src_node) {
+                local_port_cnt = 0;
+            }
             Entity e_port = ctx.makeEntity<EgressPort>();
             ctx.get<SchedTrajType>(e_port) = SchedTrajType::SP;
             ctx.get<PortType>(e_port) = PortType::EPort;
-            ctx.get<LocalPortID>(e_port).local_port_id = j;
-            ctx.get<GlobalPortID>(e_port).global_port_id = i*k_ary+j; //i*k_ary+j;
+            ctx.get<LocalPortID>(e_port).local_port_id = local_port_cnt;
+            ctx.get<GlobalPortID>(e_port).global_port_id = global_port_cnt;
 
-            //pfc
             for (uint32_t k = 0; k < QUEUE_NUM; k++) {
                 ctx.get<PktQueue>(e_port).pkt_buf[k].head = 0;
                 ctx.get<PktQueue>(e_port).pkt_buf[k].tail = 0;
@@ -849,125 +490,85 @@ void generate_e_port(Engine &ctx, CountT k_ary)
             ctx.get<TXHistory>(e_port).cur_num = 0;
             ctx.get<TXHistory>(e_port).cur_bytes = 0;
 
-            ctx.get<SwitchID>(e_port).switch_id = i;
+            ctx.get<SwitchID>(e_port).switch_id = cur_src_node - num_net_npu;
 
-            if(j < k_ary/2) 
+            if (next_hop_port[num_net_npu_port + global_port_cnt] < num_net_npu_port) {
                 ctx.get<NextHopType>(e_port) = NextHopType::HOST;
-            else
+                ctx.get<NextHop>(e_port).next_hop = next_hop_port[num_net_npu_port + global_port_cnt]; // next_hop_port table also includes mapping from switch to host 
+            } else {
                 ctx.get<NextHopType>(e_port) = NextHopType::SWITCH;
-
-            uint32_t ett_idx = ctx.data().numEPort;
-            ctx.get<NextHop>(e_port).next_hop = next_hop_table[ett_idx]; // next_hop_table also include mapping  switch to host nic
-
-            ctx.get<LinkRate>(e_port).link_rate = 1000LL*1000*1000*100;
-            ctx.get<SSLinkDelay>(e_port).SS_link_delay = SS_LINK_DELAY;
-
-            ctx.get<SimTime>(e_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(e_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
-
-            ctx.get<Seed>(e_port).seed = i+1;
-
-            ctx.data().ePorts[ctx.data().numEPort++] = e_port;
-        }
-    }
-
-    // egress_ports for aggragate switch
-    for (uint32_t i = 0; i < num_aggr_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
-            Entity e_port = ctx.makeEntity<EgressPort>();
-            ctx.get<SchedTrajType>(e_port) = SchedTrajType::SP;
-            ctx.get<PortType>(e_port) = PortType::EPort;
-            ctx.get<LocalPortID>(e_port).local_port_id = j; //i*k_ary+j;
-            ctx.get<GlobalPortID>(e_port).global_port_id = (i+num_edge_switch)*k_ary+j;
-
-            //pfc
-            for (uint32_t k = 0; k < QUEUE_NUM; k++) {
-                ctx.get<PktQueue>(e_port).pkt_buf[k].head = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].tail = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].cur_num = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].cur_bytes = 0;
-
-                ctx.get<PktQueue>(e_port).queue_pfc_state[k] = PFCState::RESUME; 
+                ctx.get<NextHop>(e_port).next_hop = next_hop_port[num_net_npu_port + global_port_cnt] - num_net_npu_port; 
             }
-
-            ctx.get<TXHistory>(e_port).head = 0;
-            ctx.get<TXHistory>(e_port).tail = 0;
-            ctx.get<TXHistory>(e_port).cur_num = 0;
-            ctx.get<TXHistory>(e_port).cur_bytes = 0;
-
-            ctx.get<SwitchID>(e_port).switch_id = i + num_edge_switch;
-
-            ctx.get<NextHopType>(e_port) = NextHopType::SWITCH;
-
-            uint32_t ett_idx = ctx.data().numEPort;
-            ctx.get<NextHop>(e_port).next_hop = next_hop_table[ett_idx];
-
-            ctx.get<LinkRate>(e_port).link_rate = 1000LL*1000*1000*100;
-            ctx.get<SSLinkDelay>(e_port).SS_link_delay = SS_LINK_DELAY;
-
-            ctx.get<SimTime>(e_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(e_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
-
-            ctx.get<Seed>(e_port).seed = i+1;
-
-            ctx.data().ePorts[ctx.data().numEPort++] = e_port;
-        }
-    }
-
-    // egress_ports for core switch
-    for (uint32_t i = 0; i < num_core_switch; i++) {
-        for (uint32_t j = 0; j < k_ary; j++) {
-
-            Entity e_port = ctx.makeEntity<EgressPort>();
-            ctx.get<SchedTrajType>(e_port) = SchedTrajType::SP;
-            ctx.get<PortType>(e_port) = PortType::EPort;
-            ctx.get<LocalPortID>(e_port).local_port_id = j; //i*k_ary+j;
-            ctx.get<GlobalPortID>(e_port).global_port_id = ctx.data().numEPort + (i+num_edge_switch+num_aggr_switch)*k_ary+j;
-
-            //pfc
-            for (uint32_t k = 0; k < QUEUE_NUM; k++) {
-                ctx.get<PktQueue>(e_port).pkt_buf[k].head = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].tail = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].cur_num = 0;
-                ctx.get<PktQueue>(e_port).pkt_buf[k].cur_bytes = 0;
-
-                ctx.get<PktQueue>(e_port).queue_pfc_state[k] = PFCState::RESUME; 
-            }
-
-            ctx.get<TXHistory>(e_port).head = 0;
-            ctx.get<TXHistory>(e_port).tail = 0;
-            ctx.get<TXHistory>(e_port).cur_num = 0;
-            ctx.get<TXHistory>(e_port).cur_bytes = 0;
-
-            ctx.get<SwitchID>(e_port).switch_id = i + num_edge_switch + num_aggr_switch;
             
-            ctx.get<NextHopType>(e_port) = NextHopType::SWITCH;
+            ctx.get<SSLinkDelay>(e_port).SS_link_delay = link[idx][4]; //unit is nanosecond 
+            ctx.get<LinkRate>(e_port).link_rate = 1000LL * 1000 * 1000 * link[idx][3];
 
-            uint32_t ett_idx = ctx.data().numEPort;
-            ctx.get<NextHop>(e_port).next_hop = next_hop_table[ett_idx];
-
-            ctx.get<LinkRate>(e_port).link_rate = 1000LL*1000*1000*100;
-            ctx.get<SSLinkDelay>(e_port).SS_link_delay = SS_LINK_DELAY;
 
             ctx.get<SimTime>(e_port).sim_time = 0;
-            ctx.get<SimTimePerUpdate>(e_port).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
+            ctx.get<SimTimePerUpdate>(e_port).sim_time_per_update = LOOKAHEAD_TIME; // 1000ns
 
-            ctx.get<Seed>(e_port).seed = i+1;
+            ctx.get<Seed>(e_port).seed = cur_src_node + 1;
 
             ctx.data().ePorts[ctx.data().numEPort++] = e_port;
+            
+            local_port_cnt++;
+            global_port_cnt++;
+
+            // printf("node_id:%d, global_port_id: %d, local_port_id: %d, next_hop: %d\n", cur_src_node, ctx.get<GlobalPortID>(e_port).global_port_id, ctx.get<LocalPortID>(e_port).local_port_id, ctx.get<NextHop>(e_port).next_hop); 
         }
+        prev_src_node = cur_src_node;
     }
-    printf("Total %d switches, %d in_ports, %d e_ports\n", \
-           ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort);
+
+
+    // // for test the memory occupation 
+    // for (uint32_t idx = 1000; idx < 30000; idx++) {
+    //     Entity e_port = ctx.makeEntity<EgressPort>();
+
+    //     ctx.get<SchedTrajType>(e_port) = SchedTrajType::SP;
+    //     ctx.get<PortType>(e_port) = PortType::EPort;
+    //     ctx.get<LocalPortID>(e_port).local_port_id = idx%100;
+    //     ctx.get<GlobalPortID>(e_port).global_port_id = idx;
+
+    //     for (uint32_t k = 0; k < QUEUE_NUM; k++) {
+    //         ctx.get<PktQueue>(e_port).pkt_buf[k].head = 0;
+    //         ctx.get<PktQueue>(e_port).pkt_buf[k].tail = 0;
+    //         ctx.get<PktQueue>(e_port).pkt_buf[k].cur_num = 0;
+    //         ctx.get<PktQueue>(e_port).pkt_buf[k].cur_bytes = 0;
+
+    //         ctx.get<PktQueue>(e_port).queue_pfc_state[k] = PFCState::RESUME;
+    //     }
+
+    //     ctx.get<TXHistory>(e_port).head = 0;
+    //     ctx.get<TXHistory>(e_port).tail = 0;
+    //     ctx.get<TXHistory>(e_port).cur_num = 0;
+    //     ctx.get<TXHistory>(e_port).cur_bytes = 0;
+
+
+
+    //     ctx.data().ePorts[ctx.data().numEPort++] = e_port;
+
+    //     ctx.get<SwitchID>(e_port).switch_id = 10000;
+    //     ctx.get<NextHopType>(e_port) = NextHopType::SWITCH;
+    //     ctx.get<NextHop>(e_port).next_hop = 100000;
+    // }
+
 }
 
-void generate_host(Engine &ctx, CountT k_ary)
-{
-    CountT num_host = k_ary*k_ary*k_ary/4;
 
-    printf("*******Generate NET_NPUs*******\n");
-    //NET_NPUs
-    for (uint32_t i = 0; i < num_host; i++) {
+
+void new_generate_host(Engine &ctx)
+{
+    printf("    enter generate_host\n");
+    uint32_t num_net_npu = ctx.data().num_net_npu;
+    uint32_t num_switch = ctx.data().num_switch;
+
+    uint32_t num_sw_port = ctx.data().sw_port_num;
+    uint32_t num_net_npu_port = ctx.data().net_npu_port_num;
+
+    int16_t *next_hop_port = ctx.data().next_hop_port;
+
+    uint32_t net_npu_cnt = 0;
+    for (uint32_t i = 0; i < num_net_npu; i++) {
         Entity net_npu_e = ctx.makeEntity<NET_NPU>();
         
         ctx.get<NET_NPU_ID>(net_npu_e).net_npu_id = i;
@@ -987,72 +588,13 @@ void generate_host(Engine &ctx, CountT k_ary)
         ctx.get<NewFlowQueue>(net_npu_e).tail = 0;
         ctx.get<NewFlowQueue>(net_npu_e).cur_num = 0;
 
-        ctx.data()._net_npus[ctx.data().num_net_npu++] = net_npu_e;
+        ctx.data()._net_npus[net_npu_cnt++] = net_npu_e;
     }
 
-    printf("*******Generate NICs*******\n");
-    //nic
-    for (uint32_t i = 0; i < num_host; i++) {
-        // if (i > 3) {
-        //     break;
-        // }
-        // printf("nic: %d\n", i);
-        Entity nic_e = ctx.makeEntity<NIC>();
-        ctx.get<NIC_ID>(nic_e).nic_id = i;
-        // ctx.get<EgressPortID>(nic_e).egress_port_id = i;
-
-        // printf("MountedFlows\n");
-        ctx.get<MountedFlows>(nic_e).head = 0;
-        ctx.get<MountedFlows>(nic_e).tail = 0;
-        ctx.get<MountedFlows>(nic_e).cur_num = 0;
-
-        // printf("BidPktBuf\n");
-        ctx.get<BidPktBuf>(nic_e).snd_buf.head = 0;
-        ctx.get<BidPktBuf>(nic_e).snd_buf.tail = 0;
-        ctx.get<BidPktBuf>(nic_e).snd_buf.cur_num = 0;
-        ctx.get<BidPktBuf>(nic_e).snd_buf.cur_bytes = 0;
-
-        ctx.get<BidPktBuf>(nic_e).recv_buf.head = 0;
-        ctx.get<BidPktBuf>(nic_e).recv_buf.tail = 0;
-        ctx.get<BidPktBuf>(nic_e).recv_buf.cur_num = 0;
-        ctx.get<BidPktBuf>(nic_e).recv_buf.cur_bytes = 0;
-
-        // printf("TXHistory\n");
-        ctx.get<TXHistory>(nic_e).head = 0;
-        ctx.get<TXHistory>(nic_e).tail = 0;
-        ctx.get<TXHistory>(nic_e).cur_num = 0;
-        ctx.get<TXHistory>(nic_e).cur_bytes = 0;
-
-        // printf("NextHopType\n");
-        ctx.get<NextHopType>(nic_e) = NextHopType::SWITCH;
-
-        // printf("HSLinkDelay\n");
-        ctx.get<HSLinkDelay>(nic_e).HS_link_delay = HS_LINK_DELAY; // 1 us, 1000 ns 
-        // printf("NICRate\n");       
-        ctx.get<NICRate>(nic_e).nic_rate = 1000LL*1000*1000*100; // 100 Gbps 
-        // printf("ett_idx\n");  
-        uint32_t ett_idx = ctx.data().num_nic;
-        // printf("NextHop\n");
-        ctx.get<NextHop>(nic_e).next_hop = next_hop_table_host_to_sw[ett_idx];
-        // printf("SimTime\n");
-        ctx.get<SimTime>(nic_e).sim_time = 0;
-
-        ctx.get<Seed>(nic_e).seed = i;
-        ctx.get<SimTimePerUpdate>(nic_e).sim_time_per_update = LOOKAHEAD_TIME; //1000ns
-        
-        ctx.data()._nics[ctx.data().num_nic++] = nic_e;
-    }
-
-
-    // memset(ctx.data().flow_cnt, 0, MAX_PATH_LEN*sizeof(uint32_t));
-
-    // printf("Total %d switches, %d in_ports, %d e_ports, %d send_flows, %d recv_flows\n", \
-    //        ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort, ctx.data().num_snd_flow, ctx.data().num_recv_flow);
     
     printf("Total %d switches, %d in_ports, %d e_ports, %d net_npus\n", \
-           ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort, ctx.data().num_net_npu);
+           ctx.data().num_switch, ctx.data().numInPort, ctx.data().numEPort, ctx.data().num_net_npu);
 }
-
 
 
 }

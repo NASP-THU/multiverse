@@ -35,8 +35,6 @@ public:
         madrona::render::GPUDevice *extRenderDev = nullptr;
         uint32_t kAray; // fei add in 20241215
         uint32_t ccMethod; // fei add in 20241215
-        Topo topo;
-        uint32_t **Links; // Change from fixed-size array to pointer
     };
 
     Manager(const Config &cfg);
@@ -65,9 +63,8 @@ public:
     madrona::py::Tensor simulationTimeTensor() const;
     madrona::py::Tensor madronaEventsResultTensor() const;
     madrona::py::Tensor processParamsTensor() const;
-
-    madrona::py::Tensor chakraNodesDataTensor() const;
-
+    madrona::py::Tensor topoTensor() const;
+    madrona::py::Tensor fibTensor() const;
 
     // These functions are used by the viewer to control the simulation
     // with keyboard inputs in place of DNN policy actions

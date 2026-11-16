@@ -9,21 +9,13 @@ using namespace madrona;
 using namespace madrona::math;
 using namespace madrona::phys;
 
-#define PRINT_PKT_LOG 1
+// #define SYS_TEST
+#define NET_TEST 1
 
-
-// #define PRINT_SYS_LOG 1
-// #define PRINT_CC_LOG 1
-
-#define SYS_LOG true
-
-#define SYS_CHECK false
-
-#define ENABLE_TEST false
-
-#define MAX_MODE_16_LIMIT true
-
-
+// #define PRINT_PKT_LOG 1
+#define PRINT_SYS_LOG 1
+#define PRINT_CC_LOG 1
+// #define PRINT_SEND_RECV_PKT_LOG 1
 
 namespace RenderingSystem = madrona::render::RenderingSystem;
 
@@ -55,8 +47,6 @@ void Sim::registerTypes(ECSRegistry &registry, const Config &cfg)
     registry.registerComponent<StepsRemaining>();
     registry.registerComponent<EntityType>();
 
-
-
 //
     registry.registerComponent<CurStep>();
     registry.registerComponent<Results>();
@@ -66,32 +56,13 @@ void Sim::registerTypes(ECSRegistry &registry, const Config &cfg)
     registry.registerComponent<MadronaEvents>();
     registry.registerComponent<MadronaEventsResult>();
     registry.registerComponent<ProcessParams>();
+    registry.registerComponent<TopoTensor>();
+    registry.registerComponent<FibTensor>();
 //
-    registry.registerComponent<ChakraNodesData>();
 
 
     registry.registerSingleton<WorldReset>();
     registry.registerSingleton<LevelState>();
-
-    // -------------------------------------
-    registry.registerComponent<NpuID>();
-    registry.registerComponent<NodeID>();
-    registry.registerComponent<ChakraNodes>();
-    registry.registerComponent<HardwareResource>();
-    registry.registerComponent<ProcessingCompTask>();
-    registry.registerComponent<ProcessingCommTasks>();
-    registry.registerComponent<Chakra_Nodp_Nodes>();
-    registry.registerArchetype<NpuNode>();
-
-    registry.registerComponent<NextProcessTimes>();
-    registry.registerArchetype<NextProcessTimeE>();
-
-    registry.registerComponent<CommModel>();
-    registry.registerArchetype<SysConfig>();
-
-    registry.registerComponent<TaskFlows>();
-    registry.registerArchetype<ProcessComm_E>();
-
 
 
     registry.registerArchetype<Agent>();
@@ -130,8 +101,9 @@ void Sim::registerTypes(ECSRegistry &registry, const Config &cfg)
     registry.exportColumn<Agent, MadronaEvents>((uint32_t)ExportID::MadronaEvents);
     registry.exportColumn<Agent, MadronaEventsResult>((uint32_t)ExportID::MadronaEventsResult);
     registry.exportColumn<Agent, ProcessParams>((uint32_t)ExportID::ProcessParams);
+    registry.exportColumn<Agent, TopoTensor>((uint32_t)ExportID::TopoTensor);
+    registry.exportColumn<Agent, FibTensor>((uint32_t)ExportID::FibTensor);
 //
-    registry.exportColumn<Agent, ChakraNodesData>((uint32_t)ExportID::ChakraNodesData);
 
 
 //
@@ -214,7 +186,11 @@ void Sim::registerTypes(ECSRegistry &registry, const Config &cfg)
     registry.registerComponent<SwitchType>();
     registry.registerComponent<FIBTable>();
     registry.registerComponent<QueueNumPerPort>();
-    
+
+    registry.registerComponent<StartPortID>();
+    registry.registerComponent<StopPortID>();
+    registry.registerComponent<PortNum>();
+
     registry.registerArchetype<Switch>();
 
     ///////////////////////////////////////////////////////
@@ -392,7 +368,7 @@ inline void _enqueue_flow(T1 &queue, T2 pkt) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 // DCQCN CC logic
-void inline dcqcn_rate_increase(CC_Para &cc_para, uint32_t src, long curSimTime)
+void inline dcqcn_rate_increase(CC_Para &cc_para, uint32_t src, uint32_t dst, uint32_t flow_id, long curSimTime) 
 {
     if (cc_para.dcqcn_IncreaseStageCount < cc_para.dcqcn_RecoveryStageThreshold)
     {
@@ -401,8 +377,9 @@ void inline dcqcn_rate_increase(CC_Para &cc_para, uint32_t src, long curSimTime)
         cc_para.m_rate = cc_para.m_rate / 2 + cc_para.tar_rate / 2;
 
         #if PRINT_CC_LOG
-        printf("In fast recovery stage. sender: %d, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
+        printf("In fast recovery stage. sender: %u, receiver: %u, flow id: %u, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, dst, flow_id, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
         #endif
+
     }
     else if (cc_para.dcqcn_IncreaseStageCount == cc_para.dcqcn_RecoveryStageThreshold)
     {
@@ -418,7 +395,7 @@ void inline dcqcn_rate_increase(CC_Para &cc_para, uint32_t src, long curSimTime)
         cc_para.m_rate = cc_para.m_rate / 2 + cc_para.tar_rate / 2;
 
         #if PRINT_CC_LOG
-        printf("In additive increase stage. sender: %d, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
+        printf("In additive increase stage. sender: %u, receiver: %u, flow id: %u, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, dst, flow_id, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
         #endif
     }
     else
@@ -434,7 +411,7 @@ void inline dcqcn_rate_increase(CC_Para &cc_para, uint32_t src, long curSimTime)
         // update current rate
         cc_para.m_rate = cc_para.m_rate / 2 + cc_para.tar_rate / 2;
 
-        printf("In hyper increase stage. sender: %d, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
+        printf("In hyper increase stage. sender: %u, receiver: %u, flow id: %u, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, dst, flow_id, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
     }
 
     // increase the stage count
@@ -457,7 +434,7 @@ void inline dcqcn_alpha_update(CC_Para &cc_para)
 }
 
 // decrease stage of sending rate in DCQCN, when received ECE packet
-void inline dcqcn_rate_decrease(CC_Para &cc_para, uint32_t src, long curSimTime) {
+void inline dcqcn_rate_decrease(CC_Para &cc_para, uint32_t src, uint32_t dst, uint32_t flow_id, long curSimTime) {
     // if (cc_para.ECNState != ECNState.ECE_RECV)
     if (cc_para.CNPState != true)
         return;
@@ -466,12 +443,15 @@ void inline dcqcn_rate_decrease(CC_Para &cc_para, uint32_t src, long curSimTime)
     printf(" original rate: %.3lf, dcqcn_Alpha: %.3lf\n", cc_para.m_rate/(1000*1000*1000.0), cc_para.dcqcn_Alpha);
     #endif
 
-    cc_para.tar_rate = cc_para.m_rate;
+    if (cc_para.dcqcn_IncreaseStageCount > 0) {
+        cc_para.tar_rate = cc_para.m_rate;
+    }
+
     cc_para.m_rate = (long int)(cc_para.m_rate * (1.0 - cc_para.dcqcn_Alpha / 2.0));
     cc_para.dcqcn_IncreaseStageCount = 0;
 
     #if PRINT_CC_LOG
-    printf("In decrease stage. sender: %d, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
+    printf("In decrease stage. sender: %u, receiver: %u, flow id: %u, sim_time: %ld, target rate is %.3lf Gbps, and current rate is %.3lf Gbps\n", src, dst, flow_id, curSimTime, cc_para.tar_rate/(1000*1000*1000.0), cc_para.m_rate/(1000*1000*1000.0));
     #endif
 }
 
@@ -489,7 +469,7 @@ void inline dcqcn_timer_reset_if_decrease(CC_Para &cc_para, long curSimTime) {
 }
 
 // 
-void inline dcqcn_timer_rate_increase(CC_Para &cc_para, uint32_t src, long curSimTime) {
+void inline dcqcn_timer_rate_increase(CC_Para &cc_para, uint32_t src, uint32_t dst, uint32_t flow_id, long curSimTime) {
     // if current simulation time is smaller than the next rate increase time,
     // should not tigger this function
     if (curSimTime <= cc_para.dcqcn_RateIncreaseNextTime)
@@ -499,7 +479,7 @@ void inline dcqcn_timer_rate_increase(CC_Para &cc_para, uint32_t src, long curSi
     cc_para.dcqcn_RateIncreaseNextTime += cc_para.dcqcn_RateIncreaseInterval;
 
     // increase sending rate
-    dcqcn_rate_increase(cc_para, src, curSimTime);
+    dcqcn_rate_increase(cc_para, src, dst, flow_id, curSimTime);
 
 }
 
@@ -515,7 +495,7 @@ void inline dcqcn_timer_alpha_update(CC_Para &cc_para, long curSimTime) {
     dcqcn_alpha_update(cc_para);
 }
 ///////////////////////////////////////////////////////////////////////////////////
-// 
+//
 
 inline void PrintPkt(Pkt p, char *desc) {
     // if (p.sq_num != 1664400) return; //1664400
@@ -531,8 +511,11 @@ inline void PrintPkt(Pkt p, char *desc) {
          printf("pkt type: NACK\n");
     else
          printf("pkt type: CNP\n");
-     printf("%s:: src: %d, dst: %d, ecn: %hhu, payload_len: %hu, sq_num: %ld, enqueue_time: %ld, dequeue_time: %ld\n", desc, p.src, p.dst, p.ecn, p.payload_len, p.sq_num, p.enqueue_time, p.dequeue_time);
+
+    printf("%s:: src: %u, dst: %u, payload_len: %u, sq_num: %ld, enqueue_time: %ld, dequeue_time: %ld, ecn: %u\n", desc, p.src, p.dst, (uint32_t)p.payload_len, p.sq_num, p.enqueue_time, p.dequeue_time, (uint32_t)p.ecn);
+    // printf("%s:  payload_len: %hu\n", desc, p.payload_len);
 }
+
 
 template<typename T>
 inline void PrintQueue(T &queue) {
@@ -566,6 +549,7 @@ inline void create_pkt(Pkt &pkt,
     pkt.l4_port = l4_port;
     pkt.header_len = header_len;
     pkt.payload_len = payload_len;
+    // printf("Debug payload_len in create_pkt: %hd\n", pkt.payload_len);
     pkt.ip_pkt_len = ip_pkt_len;
     pkt.sq_num = sq_num;
     pkt.flow_id = flow_id;
@@ -573,9 +557,31 @@ inline void create_pkt(Pkt &pkt,
     pkt.dequeue_time = dequeue_time;
     pkt.flow_priority = flow_priority;
     pkt.pkt_type = pkt_type;
-    memcpy(pkt.path, _path, MAX_PATH_LEN * sizeof(uint32_t));
+    
+    memset(pkt.path, 0, MAX_PATH_LEN * sizeof(uint32_t)); // 先清零
+    
+    if (_path != nullptr && path_len > 0) {
+        size_t copy_len = (path_len <= MAX_PATH_LEN) ? path_len : MAX_PATH_LEN;
+        memcpy(pkt.path, _path, copy_len * sizeof(uint32_t));
+    }
+    
     pkt.path_len = path_len;
     pkt.ecn = ecn;
+}
+
+
+inline void PrintPath(uint32_t *path, uint8_t path_len) {
+    printf("path: length: %d: ", path_len);
+    for(int32_t i = 0; i < path_len/2; i++) {
+        // for (int32_t k = 2*i; k < 2 * (i+1); k++) {
+        printf("(%d, %d), ", path[2*i], path[2*i+1]);
+    }
+    printf("\n");
+    // for(int32_t i = 0; i < path_len; i++) {
+    //     // for (int32_t k = 2*i; k < 2 * (i+1); k++) {
+    //     // printf("%d, ", path[i]);
+    // }
+    // // printf("\n");
 }
 
 
@@ -593,6 +599,10 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
 // 4) recv flow in sender side (receive ACK/NACK/CNP pkt)
 
 // only snd flows in receiver side change their src and dst.
+
+    Entity nic_entt = ctx.data()._nics[flow_event.src];
+    int64_t nic_rate = ctx.get<NICRate>(nic_entt).nic_rate;
+
 
 //1) snd flow in sender side (send data pkt)
     Entity snd_flow_entt = ctx.makeEntity<SndFlow>();
@@ -620,8 +630,8 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     
     ctx.get<PFCState>(snd_flow_entt) = PFCState::RESUME;
 
-    ctx.get<CC_Para>(snd_flow_entt).m_rate = DCQCN_CurrentRate;
-    ctx.get<CC_Para>(snd_flow_entt).tar_rate = DCQCN_TargetRate;
+    ctx.get<CC_Para>(snd_flow_entt).m_rate = nic_rate;
+    ctx.get<CC_Para>(snd_flow_entt).tar_rate = nic_rate;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_Alpha = DCQCN_Alpha;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_G = DCQCN_G;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_AIRate = DCQCN_AIRate;
@@ -630,6 +640,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_RateIncreaseInterval = DCQCN_RateIncreaseInterval;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_AlphaUpdateInterval = DCQCN_AlphaUpdateInterval;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_IncreaseStageCount = DCQCN_IncreaseStageCount;
+    ctx.get<CC_Para>(snd_flow_entt).dcqcn_RecoveryStageThreshold = DCQCN_RecoveryStageThreshold;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_RateDecreaseNextTime = DCQCN_RateDecreaseNextTime;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_RateIncreaseNextTime = DCQCN_RateIncreaseNextTime;
     ctx.get<CC_Para>(snd_flow_entt).dcqcn_AlphaUpdateNextTime = DCQCN_AlphaUpdateNextTime;
@@ -646,7 +657,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<AckPktBuf>(snd_flow_entt).cur_num = 0;
     ctx.get<AckPktBuf>(snd_flow_entt).cur_bytes = 0;
 
-    ctx.get<NICRate>(snd_flow_entt).nic_rate = 1000LL*1000*1000*100; // 100 Gbps
+    ctx.get<NICRate>(snd_flow_entt).nic_rate = nic_rate; // 100 Gbps
     ctx.get<HSLinkDelay>(snd_flow_entt).HS_link_delay = HS_LINK_DELAY; // 1 us, 1000 ns 
 
     // ctx.get<SimTime>(snd_flow_entt).sim_time = flow_event.start_time;
@@ -656,8 +667,14 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
 
     // uint32_t src = flow_event.src;
 
+    // Add bounds checking before array access
+    printf("Attempting to store snd_flow in snd_flows[%u][%lu]\n", flow_event.src, flow_id);
+    // Lock around snd_flows map access to prevent race conditions  
+    ctx.data().flow_lock.lock();
     ctx.data().snd_flows[flow_event.src][flow_id] = snd_flow_entt;
-//
+    ctx.data().flow_lock.unlock();
+    printf("Successfully stored snd_flow\n");
+
 
 // 2) recv flow in receiver side (receive data pkt)
     Entity rcv_flow_entt = ctx.makeEntity<RecvFlow>();
@@ -671,7 +688,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<StartTime>(rcv_flow_entt).start_time = flow_event.start_time;
     ctx.get<StopTime>(rcv_flow_entt).stop_time = 0;
 
-    ctx.get<NIC_ID>(rcv_flow_entt).nic_id = flow_event.src;
+    ctx.get<NIC_ID>(rcv_flow_entt).nic_id = flow_event.dst;
 
     ctx.get<FlowState>(rcv_flow_entt) = FlowState::UNCOMPLETE;
 
@@ -684,7 +701,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<PktBuf>(rcv_flow_entt).cur_num = 0;
     ctx.get<PktBuf>(rcv_flow_entt).cur_bytes = 0;
 
-    ctx.get<NICRate>(rcv_flow_entt).nic_rate = 1000LL*1000*1000*100; // 100 Gbps  
+    ctx.get<NICRate>(rcv_flow_entt).nic_rate = nic_rate; // 100 Gbps  
     ctx.get<HSLinkDelay>(rcv_flow_entt).HS_link_delay = HS_LINK_DELAY; // 1 us, 1000 ns 
 
     ctx.get<SimTime>(rcv_flow_entt).sim_time = sim_time;
@@ -699,13 +716,12 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
 //
 
 
-
 // 3) snd flow in receiver side (send ACK/NACK/CNP pkt)
     Entity recv_snd_flow_entt = ctx.makeEntity<SndFlow>();
 
     ctx.get<FlowID>(recv_snd_flow_entt).flow_id = flow_id;
-    ctx.get<Src>(recv_snd_flow_entt).src = flow_event.src;
-    ctx.get<Dst>(recv_snd_flow_entt).dst = flow_event.dst;
+    ctx.get<Src>(recv_snd_flow_entt).src = flow_event.dst;
+    ctx.get<Dst>(recv_snd_flow_entt).dst = flow_event.src;
     ctx.get<L4Port>(recv_snd_flow_entt).l4_port = flow_event.l4_port; //FIXME
 
     ctx.get<FlowSize>(recv_snd_flow_entt).flow_size = 0;
@@ -726,8 +742,8 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
 
     ctx.get<PFCState>(recv_snd_flow_entt) = PFCState::RESUME;
 
-    ctx.get<CC_Para>(recv_snd_flow_entt).m_rate = DCQCN_CurrentRate;
-    ctx.get<CC_Para>(recv_snd_flow_entt).tar_rate = DCQCN_TargetRate;
+    ctx.get<CC_Para>(recv_snd_flow_entt).m_rate = nic_rate;
+    ctx.get<CC_Para>(recv_snd_flow_entt).tar_rate = nic_rate;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_Alpha = DCQCN_Alpha;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_G = DCQCN_G;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_AIRate = DCQCN_AIRate;
@@ -736,6 +752,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_RateIncreaseInterval = DCQCN_RateIncreaseInterval;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_AlphaUpdateInterval = DCQCN_AlphaUpdateInterval;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_IncreaseStageCount = DCQCN_IncreaseStageCount;
+    ctx.get<CC_Para>(snd_flow_entt).dcqcn_RecoveryStageThreshold = DCQCN_RecoveryStageThreshold;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_RateDecreaseNextTime = DCQCN_RateDecreaseNextTime;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_RateIncreaseNextTime = DCQCN_RateIncreaseNextTime;
     ctx.get<CC_Para>(recv_snd_flow_entt).dcqcn_AlphaUpdateNextTime = DCQCN_AlphaUpdateNextTime;
@@ -752,7 +769,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<AckPktBuf>(recv_snd_flow_entt).cur_num = 0;
     ctx.get<AckPktBuf>(recv_snd_flow_entt).cur_bytes = 0;
 
-    ctx.get<NICRate>(recv_snd_flow_entt).nic_rate = 1000LL*1000*1000*100; // 100 Gbps
+    ctx.get<NICRate>(recv_snd_flow_entt).nic_rate = nic_rate; // 100 Gbps
     ctx.get<HSLinkDelay>(recv_snd_flow_entt).HS_link_delay = HS_LINK_DELAY; // 1 us, 1000 ns 
 
     // ctx.get<SimTime>(recv_snd_flow_entt).sim_time = flow_event.start_time;
@@ -766,14 +783,14 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
 
     ctx.data().flow_lock.unlock();
 
-//
+
 // 4) recv flow in sender side (receive ACK/NACK/CNP pkt)
     Entity snd_recv_flow_entt = ctx.makeEntity<RecvFlow>();
 
     ctx.get<FlowID>(snd_recv_flow_entt).flow_id = flow_id;
     //
-    ctx.get<Src>(snd_recv_flow_entt).src = flow_event.src;
-    ctx.get<Dst>(snd_recv_flow_entt).dst = flow_event.dst;
+    ctx.get<Src>(snd_recv_flow_entt).src = flow_event.dst;
+    ctx.get<Dst>(snd_recv_flow_entt).dst = flow_event.src;
     //
     ctx.get<L4Port>(snd_recv_flow_entt).l4_port = flow_event.l4_port; //FIXME
 
@@ -781,7 +798,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<StartTime>(snd_recv_flow_entt).start_time = flow_event.start_time;
     ctx.get<StopTime>(snd_recv_flow_entt).stop_time = 0;
 
-    ctx.get<NIC_ID>(snd_recv_flow_entt).nic_id = flow_event.dst;
+    ctx.get<NIC_ID>(snd_recv_flow_entt).nic_id = flow_event.src;
 
     ctx.get<FlowState>(snd_recv_flow_entt) = FlowState::UNCOMPLETE;
 
@@ -794,7 +811,7 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.get<PktBuf>(snd_recv_flow_entt).cur_num = 0;
     ctx.get<PktBuf>(snd_recv_flow_entt).cur_bytes = 0;
 
-    ctx.get<NICRate>(snd_recv_flow_entt).nic_rate = 1000LL*1000*1000*100; // 100 Gbps  
+    ctx.get<NICRate>(snd_recv_flow_entt).nic_rate = nic_rate; //  
     ctx.get<HSLinkDelay>(snd_recv_flow_entt).HS_link_delay = HS_LINK_DELAY; // 1 us, 1000 ns 
 
     ctx.get<SimTime>(snd_recv_flow_entt).sim_time = sim_time;
@@ -808,15 +825,19 @@ inline void create_flow(Engine &ctx, FlowEvent flow_event, uint64_t flow_id, int
     ctx.data().flow_lock.unlock();
 
     // printf("Exiting create_flow for flow_id: %lu\n", flow_id);
+
+
 }
 
 
-uint32_t flow_id = 0;
+// uint64_t flow_id = 0;
 
-inline void setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t flow_size, uint32_t &flow_id) {
-    ctx.data().flow_lock.lock();
-    flow_id++;
-    ctx.data().flow_lock.unlock();
+inline void setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t flow_size, uint64_t flow_id) {
+    // ctx.data().flow_lock.lock();
+    // #if NET_TEST
+    // flow_id++;
+    // #endif
+    // ctx.data().flow_lock.unlock();
 
     Entity net_npu = ctx.data()._net_npus[comm_src]; 
     int64_t sim_time = ctx.get<SimTime>(net_npu).sim_time;
@@ -826,7 +847,7 @@ inline void setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t 
     _enqueue_flow(ctx.get<NewFlowQueue>(net_npu), flow_event);
     ctx.data().flow_lock.unlock(); 
 
-    printf("set flow id %d: %d->%d %d, \n", flow_id, comm_src, comm_dst, flow_size);
+    printf("set flow id %d: %ld->%ld %ld, \n", flow_id, comm_src, comm_dst, flow_size);
 }
 
 
@@ -841,34 +862,45 @@ inline void comm_set_flow(Engine &ctx, NET_NPU_ID _net_npu_id,
     }
     #endif
 
-    if(_sim_time.sim_time % 10000 != 0) {return;}
-    // int k = 4;
-    // int net_npu_num = k*k*k*1/4;   
-    // if (_net_npu_id.net_npu_id >= 3) return;
-    // printf("net_npu_num: %d, net_npu_id: %d\n", net_npu_num, _net_npu_id.net_npu_id);
+    if((_sim_time.sim_time % (1000000LL*1000) != 0)) {return;}
 
-    if (_net_npu_id.net_npu_id == 0) {
-        // uint32_t src = _net_npu_id.net_npu_id;
-        // uint32_t dst = _net_npu_id.net_npu_id+1;
+    // scenario: 2 to 1
+    // if (_net_npu_id.net_npu_id == 0 || _net_npu_id.net_npu_id == 2) {
+    //     uint32_t src = _net_npu_id.net_npu_id;
+    //     uint32_t dst = 3;
+    //     uint64_t new_flow_size = 1LL * 500* 1000 * 1000; //500*10000; //50*1000*1000;
+    //     setFlow(ctx, src, dst, new_flow_size, flow_id);
+    // }
+
+    if (_net_npu_id.net_npu_id <= 3)  {
         uint32_t src = _net_npu_id.net_npu_id;
-        uint32_t dst = 1;
-        // uint64_t flow_id = 0;
-        uint64_t flow_size = 1000;
-
-        // Lock only around shared resource access
-        setFlow(ctx, src, dst, flow_size, flow_id);
+        uint32_t dst = 9;
+        uint64_t new_flow_size = 1LL * 50 * 1000 * 1000; //500*10000; //50*1000*1000;
+        uint64_t flow_id = _net_npu_id.net_npu_id;
+        setFlow(ctx, src, dst, new_flow_size, flow_id);
     }
 
-    if (_net_npu_id.net_npu_id == 2) {
-        // uint32_t src = _net_npu_id.net_npu_id;
-        // uint32_t dst = _net_npu_id.net_npu_id+1;
-        uint32_t src = _net_npu_id.net_npu_id;
-        uint32_t dst = 3;
-        // uint64_t flow_id = 0;
-        uint64_t flow_size = 1000;
-        
-        setFlow(ctx, src, dst, flow_size, flow_id);
-    }
+    //  a step of ring all reduce
+    // if (_net_npu_id.net_npu_id < ctx.data().num_net_npu) {
+    //     uint32_t src = _net_npu_id.net_npu_id;
+    //     uint32_t dst = (_net_npu_id.net_npu_id+1)%(ctx.data().num_net_npu);
+    //     uint64_t flow_size = 1LL * 50 * 1000; 
+    //     uint64_t flow_id = _net_npu_id.net_npu_id;
+    //     setFlow(ctx, src, dst, flow_size, flow_id);
+    // }
+
+    // all to all (EP)
+    // uint32_t batch_size = 32;
+    // uint32_t token_size = 7*1024;
+    // uint32_t top_k = 8;
+    // uint64_t new_flow_size = batch_size * token_size * top_k / ctx.data().num_net_npu; // Unit is Byte
+    // if (_net_npu_id.net_npu_id < ctx.data().num_net_npu) {
+    //     for (uint32_t dst = 0; dst < ctx.data().num_net_npu; dst++) {
+    //         if (dst == _net_npu_id.net_npu_id) continue;
+    //         uint32_t src = _net_npu_id.net_npu_id;
+    //         setFlow(ctx, src, dst, new_flow_size, flow_id);
+    //     }
+    // }
 
     #if PRINT_SYS_LOG
     if (_net_npu_id.net_npu_id == 0) {
@@ -881,22 +913,22 @@ inline void comm_set_flow(Engine &ctx, NET_NPU_ID _net_npu_id,
 
 
 
-// // network interface
-// // 检测/获取流完成事件：返回流完成数量，同时把流完成事件赋值flows_finish
-// // func
-// // 系统层定义的结构体
-// struct SysFlow {
-//     uint32_t id;
-//     uint64_t comm_size;
-//     uint64_t comm_src;
-//     uint64_t comm_dst;
-//     uint32_t durationMicros;
-// };
+// network interface
+// 检测/获取流完成事件：返回流完成数量，同时把流完成事件赋值flows_finish
+// func
+// 系统层定义的结构体
+struct SysFlow {
+    uint32_t id;
+    uint64_t comm_size;
+    uint64_t comm_src;
+    uint64_t comm_dst;
+    uint32_t durationMicros;
+};
 
 
-inline int checkFlowFinish(Engine &ctx, uint32_t net_npu_id, SysFlow flows_finish[])
+inline int checkFlowFinish(Engine &ctx, uint32_t npu_id, SysFlow flows_finish[])
 {
-    Entity net_npu = ctx.data()._net_npus[net_npu_id]; 
+    Entity net_npu = ctx.data()._net_npus[npu_id]; 
     CompletedFlowQueue _completed_flow_queue =  ctx.get<CompletedFlowQueue>(net_npu);
     uint32_t flow_num_finish = get_queue_len(_completed_flow_queue);
     for (uint32_t i = 0; i < flow_num_finish; i++)
@@ -909,8 +941,9 @@ inline int checkFlowFinish(Engine &ctx, uint32_t net_npu_id, SysFlow flows_finis
         flows_finish[i].comm_src = flow_event.src;
         flows_finish[i].comm_dst = flow_event.dst;
         flows_finish[i].durationMicros = flow_event.stop_time - flow_event.start_time;
-        flows_finish[i].state=TaskState::FINISH;
-        printf("######### check flow finish: flow id %d: %d->%d %d, #########\n",flows_finish[i].id, flows_finish[i].comm_src,flows_finish[i].comm_dst,flows_finish[i].comm_size);
+        printf("check flow finish: flow id %d: src %ld-> dst %ld %ld, start_time: %ld, stop_time: %ld, \n", \
+              flows_finish[i].id, flows_finish[i].comm_src, flows_finish[i].comm_dst, flows_finish[i].comm_size,
+              flow_event.start_time, flow_event.stop_time);
     }
 
     return flow_num_finish;
@@ -921,8 +954,16 @@ inline int checkFlowFinish(Engine &ctx, uint32_t net_npu_id, SysFlow flows_finis
 inline void setup_flow(Engine &ctx, NET_NPU_ID _net_npu_id,
                        NewFlowQueue &_new_flow_queue, SimTime &_sim_time,
                        SimTimePerUpdate &_sim_time_per_update) {
+    
+    if (_sim_time.sim_time % (1000000LL*1000) != 0) {return;}
+    
     #if PRINT_SYS_LOG
+    // if (_net_npu_id.net_npu_id != 0) {return;}
+
+    // if (_net_npu_id.net_npu_id == 0) {
+
     printf("Entering setup_flow for NET_NPU_ID: %d\n", _net_npu_id.net_npu_id);
+    // }
     #endif
 
     uint32_t flow_event_num = get_queue_len(_new_flow_queue);
@@ -952,10 +993,10 @@ inline void setup_flow(Engine &ctx, NET_NPU_ID _net_npu_id,
 inline void check_flow_state(Engine &ctx, NET_NPU_ID &_net_npu_id, CompletedFlowQueue &_completed_flow_queue,
                              SimTime &_sim_time, SimTimePerUpdate &_sim_time_per_update) {
 
-    // printf("xx1\n");
     
     #if PRINT_SYS_LOG
-    if (_net_npu_id.net_npu_id == 0||_net_npu_id.net_npu_id == 1) {// printf("*********Enter into check_flow_state:*********\n");}
+    if (_net_npu_id.net_npu_id == 0) {
+        printf("*********Enter into check_flow_state:*********\n");
     // else {return;}
     }
     #endif
@@ -976,6 +1017,9 @@ inline void check_flow_state(Engine &ctx, NET_NPU_ID &_net_npu_id, CompletedFlow
                                     ctx.get<FlowSize>(snd_flow_entt).flow_size, ctx.get<StartTime>(snd_flow_entt).start_time, \
                                     ctx.get<StopTime>(snd_flow_entt).stop_time, ctx.get<FlowState>(snd_flow_entt),ctx.get<Extra_1>(snd_flow_entt).extra_1};
             _enqueue_flow(_completed_flow_queue, flow_event);
+            // printf("check_flow_state: flow id %d: src %d-> dst %d %ld, start_time: %ld, stop_time: %ld, \n", \
+            //     ctx.get<FlowID>(snd_flow_entt).flow_id, ctx.get<Src>(snd_flow_entt).src, ctx.get<Dst>(snd_flow_entt).dst, ctx.get<FlowSize>(snd_flow_entt).flow_size,
+            //     ctx.get<StartTime>(snd_flow_entt).start_time, ctx.get<StopTime>(snd_flow_entt).stop_time);
             // printf("check_flow_state: _completed_flow_queue: %d\n", get_queue_len(_completed_flow_queue));
             //
 
@@ -1022,7 +1066,42 @@ inline void check_flow_state(Engine &ctx, NET_NPU_ID &_net_npu_id, CompletedFlow
     // printf("check_flow_state: before clear_queue: _completed_flow_queue: %d\n", get_queue_len(_completed_flow_queue));
     clear_queue(_completed_flow_queue);
     // printf("check_flow_state: after clear_queue: _completed_flow_queue: %d\n", get_queue_len(_completed_flow_queue));
-    // printf("xx2\n");
+
+    // if (_net_npu_id.net_npu_id == 0) {
+    //     if(_sim_time.sim_time >= (999*1000)) {
+    //         for (uint32_t src = 0; src < ctx.data().num_net_npu; ++src) {
+    //             int remain = ctx.data().snd_flows[src].size();
+    //             if (remain > 0) {
+    //                 auto &snd_flow_map = ctx.data().snd_flows[src];
+    //                 for (auto it = snd_flow_map.begin(); it != snd_flow_map.end(); ++it) {
+    //                     auto &entry = *it;
+    //                     Entity snd_flow_entt = entry.value;
+    //                     // 打印所有字段
+    //                     printf("[sim_time=%ld] SndFlow: src=%u, dst=%u, flow_id=%lu, l4_port=%u, flow_size=%lu, start_time=%ld, stop_time=%ld, nic_id=%u, snd_server_id=%u, recv_server_id=%u, snd_nxt=%ld, snd_una=%ld, flow_state=%u, last_ack_timestamp=%ld, nxt_pkt_event=%ld\n",
+    //                         _sim_time.sim_time,
+    //                         ctx.get<Src>(snd_flow_entt).src,
+    //                         ctx.get<Dst>(snd_flow_entt).dst,
+    //                         ctx.get<FlowID>(snd_flow_entt).flow_id,
+    //                         ctx.get<L4Port>(snd_flow_entt).l4_port,
+    //                         ctx.get<FlowSize>(snd_flow_entt).flow_size,
+    //                         ctx.get<StartTime>(snd_flow_entt).start_time,
+    //                         ctx.get<StopTime>(snd_flow_entt).stop_time,
+    //                         ctx.get<NIC_ID>(snd_flow_entt).nic_id,
+    //                         ctx.get<SndServerID>(snd_flow_entt).snd_server_id,
+    //                         ctx.get<RecvServerID>(snd_flow_entt).recv_server_id,
+    //                         ctx.get<SndNxt>(snd_flow_entt).snd_nxt,
+    //                         ctx.get<SndUna>(snd_flow_entt).snd_una,
+    //                         (uint32_t)ctx.get<FlowState>(snd_flow_entt),
+    //                         ctx.get<LastAckTimestamp>(snd_flow_entt).last_ack_timestamp,
+    //                         ctx.get<NxtPktEvent>(snd_flow_entt).nxt_pkt_event
+    //                     );
+    //                 }
+    //                 printf("[sim_time=%ld] src %u, remaining snd_flows: %d\n", _sim_time.sim_time, src, remain);                
+    //             }
+    //         }
+    //     }
+    // }
+
 }
 
 
@@ -1040,12 +1119,12 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
     // Entity in_port = ctx.data().inPorts[_next_hop.next_hop];
     int64_t end_time = _sim_time.sim_time + _sim_time_per_update.sim_time_per_update;
     #if PRINT_SYS_LOG
-    // if (_flow_id.flow_id == 0 || _flow_id.flow_id == 1) {
+    if (_flow_id.flow_id == 0) {
     printf("\n*******Enter into flow send*********\n");
     printf("src: %d, dst: %d, flow_id: %lu, start _sim_time.sim_time: %ld, end_time: %ld\n", _src.src, _dst.dst, _flow_id.flow_id, _sim_time.sim_time, end_time);
     // printf("end_time: %ld\n", end_time);
     printf("cc target rate: %.3lf, cc cur rate: %.3lf\n", _cc_para.tar_rate/(1000*1000*1000.0), _cc_para.m_rate/(1000*1000*1000.0));
-    // }
+    }
     #endif
 
     // uint16_t flow_id = 0;
@@ -1068,7 +1147,7 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
         // new arrival of non-data(ACK/NACK/CNP) packet
         uint16_t ack_pkt_cnt = 0;
         while (fetch_elem(_ack_buf, 0, ack_p)) {  // if ack pkt is available
-            if ((ack_p.enqueue_time >= end_time) && (ack_p.enqueue_time > _nxt_pkt_event.nxt_pkt_event &&_snd_nxt.snd_nxt != _flow_size.flow_size)) {
+            if ((ack_p.enqueue_time >= end_time) || (ack_p.enqueue_time > _nxt_pkt_event.nxt_pkt_event && _snd_nxt.snd_nxt != _flow_size.flow_size)) {
                 break;
             }
 
@@ -1079,8 +1158,9 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
             _dequeue(_ack_buf, ack_p);
 
             // if (ack_p.dst == _src.src) {// reaction for ACK/NACK packets
-            #if PRINT_PKT_LOG
+            #if PRINT_SEND_RECV_PKT_LOG
             PrintPkt(ack_p, "*ACK received by sender: ");
+            // PrintPath(ack_p.path, ack_p.path_len);
             #endif
             if (ack_p.pkt_type == PktType::ACK) { // ACK
                 _snd_una.snd_una = ack_p.sq_num;
@@ -1089,7 +1169,10 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
                 if (_snd_una.snd_una >= _flow_size.flow_size) {
                     // _nxt_pkt_event.nxt_pkt_event = INT64_MAX;
                     if (_flow_size.flow_size > 0 && _flow_state == FlowState::UNCOMPLETE) {
-                        printf("flow sender id: %d, flow receiver id: %d, flow id is %lu, flow is finished\n", _src.src, _dst.dst, _flow_id.flow_id, _snd_una.snd_una);
+                        _sim_time.sim_time = _sim_time.sim_time > ack_p.enqueue_time ? _sim_time.sim_time : ack_p.enqueue_time;
+                        _stop_time.stop_time = _sim_time.sim_time;
+                        printf("Flow is finished: flow sender id: %d, flow receiver id: %d, flow id is %lu, start_time: %ld, stop_time: %ld\n",\
+                               _src.src, _dst.dst, _flow_id.flow_id, _start_time.start_time, _stop_time.stop_time);
                     }
 
                     _flow_state = FlowState::COMPLETE;
@@ -1106,8 +1189,11 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
                 _last_ack_timestamp.last_ack_timestamp = _sim_time.sim_time;
             }
             else if (ack_p.pkt_type == PktType::CNP){ // CNP
+                #if PRINT_PKT_LOG
+                // PrintPkt(ack_p, "Received CNP in flow send side");
+                #endif
                 _cc_para.CNPState = true;
-                dcqcn_rate_decrease(_cc_para, ack_p.src, _sim_time.sim_time);
+                dcqcn_rate_decrease(_cc_para, ack_p.dst, ack_p.src, ack_p.flow_id, _sim_time.sim_time);
                 dcqcn_alpha_update(_cc_para);
                 _cc_para.CNPState = false;
                 //record the rate is decreased
@@ -1122,11 +1208,10 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
                         _pfc_state = PFCState::RESUME;
                 }
             }
-            // }
-            // else { // the ACK/NACK packet is not for me, send it out by the sender's receiver 
-            //     _enqueue(_snd_buf, ack_p);
-            // }
-            _sim_time.sim_time += 1; // increase 1 ns
+
+            // the simulation time goes forward to pkt.enqueue_time.
+            _sim_time.sim_time = _sim_time.sim_time > ack_p.enqueue_time ? _sim_time.sim_time : ack_p.enqueue_time;
+
             ack_pkt_cnt += 1;
         }
 
@@ -1134,7 +1219,7 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
         // the order should be: check if decrease, update alpha, increase send rate
         dcqcn_timer_reset_if_decrease(_cc_para, _sim_time.sim_time);
         dcqcn_timer_alpha_update(_cc_para, _sim_time.sim_time);
-        dcqcn_timer_rate_increase(_cc_para, _src.src, _sim_time.sim_time);
+        dcqcn_timer_rate_increase(_cc_para, _src.src, _dst.dst, _flow_id.flow_id, _sim_time.sim_time);
 
 
         // if (_sender_id.sender_id == 0) {
@@ -1144,7 +1229,11 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
         if (_snd_una.snd_una >= _flow_size.flow_size) {
             _flow_state = FlowState::COMPLETE;
 
-            // printf("Flow is finished: sender net_npu id: %d, recv net_npu id: %d, flow id : %d, _start_time: %ld ns, stop time : %ld ns\n", _src.src, _dst.dst, _flow_id.flow_id, _start_time.start_time, _stop_time.stop_time);
+            if (_flow_size.flow_size > 0) {
+                // printf("Flow is finished: flow sender id: %d, flow receiver id: %d, flow id is %lu, start_time: %ld, stop_time: %ld\n",\
+                //     _src.src, _dst.dst, _flow_id.flow_id, _start_time.start_time, _stop_time.stop_time);
+            }
+
             break;
         }
 
@@ -1152,8 +1241,11 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
             _nxt_pkt_event.nxt_pkt_event = _sim_time.sim_time;
         }
         else {
-            _sim_time.sim_time = _nxt_pkt_event.nxt_pkt_event;
+            //_sim_time.sim_time = _nxt_pkt_event.nxt_pkt_event;
+            _sim_time.sim_time = ((_nxt_pkt_event.nxt_pkt_event > end_time) ? end_time : _nxt_pkt_event.nxt_pkt_event);
         }
+        // printf("sim_time: %ld, nxt_pkt_event_time: %ld\n", _sim_time.sim_time, _nxt_pkt_event.nxt_pkt_event);
+
         // } // cannot handle when _sim_time.sim_time == nxt_pkt_event
 
         if ((_sim_time.sim_time - _last_ack_timestamp.last_ack_timestamp) >= RETRANSMIT_TIMER) {
@@ -1190,9 +1282,10 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
             if (remain_data_len > (MTU-header_len)) {   
                 payload_len = MTU-header_len;
             }
+            // printf("Debug: payload_len: %hu\n", payload_len);
             uint16_t pkt_size = payload_len+header_len;
-            int64_t dequeue_time = _sim_time.sim_time + (pkt_size*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000); // unit is ns
-            //int64_t enqueue_time = dequeue_time + _HS_link_delay.HS_link_delay;
+            // int64_t dequeue_time = _sim_time.sim_time + (pkt_size*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000); // unit is ns
+            int64_t dequeue_time = _sim_time.sim_time + (pkt_size*8*1.0/_cc_para.m_rate)*(1000*1000*1000); // unit is ns
             int64_t enqueue_time = dequeue_time;
 
             PktType pkt_type = PktType::DATA;
@@ -1200,9 +1293,9 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
             int64_t sq_num = _snd_nxt.snd_nxt;
 
             // Pkt pkt;
-            create_pkt(pkt, _src.src, _dst.dst, _l4_port.l4_port, header_len, payload_len, header_len+payload_len, sq_num, _flow_id.flow_id, enqueue_time, dequeue_time, flow_priority, pkt_type, path, 0, ECN_MARK::NO);
+            create_pkt(pkt, _src.src, _dst.dst, _l4_port.l4_port, header_len, payload_len, pkt_size, sq_num, _flow_id.flow_id, enqueue_time, dequeue_time, flow_priority, pkt_type, path, 0, ECN_MARK::NO);
 
-            #if PRINT_PKT_LOG
+            #if PRINT_SEND_RECV_PKT_LOG
             PrintPkt(pkt, "flow send by sender: ");
             #endif
 
@@ -1220,11 +1313,12 @@ inline void flow_send(Engine &ctx, FlowID &_flow_id, Src &_src, Dst &_dst, L4Por
             sent_bytes += pkt_size;
 
             // FIXME TBD
-            if (_snd_una.snd_una == _flow_size.flow_size) {
+            if (_snd_una.snd_una >= _flow_size.flow_size) {
                 _flow_state = FlowState::COMPLETE;
                 _stop_time.stop_time = _sim_time.sim_time;
                 if (_flow_size.flow_size > 0) {
-                    printf("Flow is finished: sender net_npu id: %d, recv net_npu id: %d, flow id : %lu, _start_time: %ld ns, stop time : %ld ns\n", _src.src, _dst.dst, _flow_id.flow_id, _start_time.start_time, _stop_time.stop_time);
+                    // printf("Flow is finished: flow sender id: %d, flow receiver id: %d, flow id is %lu, start_time: %ld, stop_time: %ld\n",\
+                    //     _src.src, _dst.dst, _flow_id.flow_id, _start_time.start_time, _stop_time.stop_time);
                 }
                 break;
             }
@@ -1281,9 +1375,9 @@ inline void nic_forward(Engine &ctx, NIC_ID &_nic_id, NICRate &_nic_rate, SimTim
 
             // printf("nic_forward: after dequeue, snd_flow_buf: %d\n", get_queue_len(snd_flow_buf));
             _enqueue(_bid_pkt_buf.snd_buf, pkt);
-            #if PRINT_PKT_LOG
-            PrintPkt(pkt, "nic_forward(data pkt): ");
-            #endif
+            // #if PRINT_PKT_LOG
+            // PrintPkt(pkt, "nic_forward(data pkt): ");
+            // #endif
             // printf("nic_forward: after enqueue, _bid_pkt_buf.snd_buf: %d\n", get_queue_len(_bid_pkt_buf.snd_buf));
         }
         clear_queue(ctx.get<PktBuf>(flow_entt));
@@ -1292,7 +1386,8 @@ inline void nic_forward(Engine &ctx, NIC_ID &_nic_id, NICRate &_nic_rate, SimTim
         
         // printf("nic_forward: after clear_queue, snd_flow_buf: %d\n", get_queue_len(snd_flow_buf));
     }
-    
+
+
     // snd flow in receiver side (send ACK/NACK/CNP pkt)
     Map<uint64_t, Entity> tmp_recv_snd_flow = ctx.data().recv_snd_flows[_nic_id.nic_id];
     for (auto it = tmp_recv_snd_flow.begin(); it != tmp_recv_snd_flow.end(); ++it) {
@@ -1311,9 +1406,9 @@ inline void nic_forward(Engine &ctx, NIC_ID &_nic_id, NICRate &_nic_rate, SimTim
             // PrintPkt(pkt, "nic_forward: ");
             // printf("nic_forward: after dequeue, recv_snd_flow_buf: %d\n", get_queue_len(recv_snd_flow_buf));
             _enqueue(_bid_pkt_buf.snd_buf, pkt);
-            #if PRINT_PKT_LOG
-            PrintPkt(pkt, "nic_forward(ACK/NACK/CNP): ");
-            #endif
+            // #if PRINT_PKT_LOG
+            // PrintPkt(pkt, "nic_forward(ACK/NACK/CNP): ");
+            // #endif
             // printf("nic_forward: after enqueue, _bid_pkt_buf.snd_buf: %d\n", get_queue_len(_bid_pkt_buf.snd_buf));
         }
         clear_queue(ctx.get<PktBuf>(flow_entt));
@@ -1351,6 +1446,93 @@ inline void nic_transmit(Engine &ctx, NIC_ID &_nic_id,
                          NextHop &_next_hop, Seed &_seed) {
     int64_t end_time = _sim_time.sim_time + _sim_time_per_update.sim_time_per_update;
     
+
+
+
+
+
+
+
+
+
+    // //snd flow in sender side (send data pkt)
+    // Map<uint64_t, Entity> tmp_snd_flow = ctx.data().snd_flows[_nic_id.nic_id];
+    // for (auto it = tmp_snd_flow.begin(); it != tmp_snd_flow.end(); ++it) {
+    //     auto& entry = *it;
+    //     Entity flow_entt = entry.value;
+    //     // printf("nic_id: %d\n", _nic_id.nic_id);
+    //     // printf("src: %d, dst: %d, flow_id: %lu\n", ctx.get<Src>(flow_entt).src, ctx.get<Dst>(flow_entt).dst, ctx.get<FlowID>(flow_entt).flow_id);
+    //     PktBuf snd_flow_buf = ctx.get<PktBuf>(flow_entt);
+        
+    //     uint16_t pkt_num = get_queue_len(snd_flow_buf);
+    //     Pkt pkt;
+    //     for (uint16_t k = 0; k < pkt_num; k++) {
+    //         _dequeue(snd_flow_buf, pkt);
+
+    //         // printf("nic_forward: after dequeue, snd_flow_buf: %d\n", get_queue_len(snd_flow_buf));
+    //         _enqueue(_bid_pkt_buf.snd_buf, pkt);
+    //         // #if PRINT_PKT_LOG
+    //         // PrintPkt(pkt, "nic_forward(data pkt): ");
+    //         // #endif
+    //         // printf("nic_forward: after enqueue, _bid_pkt_buf.snd_buf: %d\n", get_queue_len(_bid_pkt_buf.snd_buf));
+    //     }
+    //     clear_queue(ctx.get<PktBuf>(flow_entt));
+    // }
+
+
+    // // // snd flow in receiver side (send ACK/NACK/CNP pkt)
+    // Map<uint64_t, Entity> tmp_recv_snd_flow = ctx.data().recv_snd_flows[_nic_id.nic_id];
+    // for (auto it = tmp_recv_snd_flow.begin(); it != tmp_recv_snd_flow.end(); ++it) {
+    //     auto& entry = *it;
+    //     Entity flow_entt = entry.value;
+
+    //     PktBuf recv_snd_flow_buf = ctx.get<PktBuf>(flow_entt);
+        
+    //     // printf("\nnic_id: %d\n", ctx.get<NIC_ID>(flow_entt).nic_id);
+    //     uint16_t pkt_num = get_queue_len(recv_snd_flow_buf);
+    //     // printf("pkt num of recv_snd_flow_buf: %d\n", pkt_num);
+    //     Pkt pkt;
+    //     for (uint16_t k = 0; k < pkt_num; k++) {
+    //         _dequeue(recv_snd_flow_buf, pkt);
+
+    //         // PrintPkt(pkt, "nic_forward: ");
+    //         // printf("nic_forward: after dequeue, recv_snd_flow_buf: %d\n", get_queue_len(recv_snd_flow_buf));
+    //         _enqueue(_bid_pkt_buf.snd_buf, pkt);
+    //         // #if PRINT_PKT_LOG
+    //         // PrintPkt(pkt, "nic_forward(ACK/NACK/CNP): ");
+    //         // #endif
+    //         // printf("nic_forward: after enqueue, _bid_pkt_buf.snd_buf: %d\n", get_queue_len(_bid_pkt_buf.snd_buf));
+    //     }
+    //     clear_queue(ctx.get<PktBuf>(flow_entt));
+
+    // }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     #if PRINT_SYS_LOG
     if (_nic_id.nic_id == 0) {
         printf("\n*******Enter into nic_transmit*********\n");
@@ -1369,7 +1551,7 @@ inline void nic_transmit(Engine &ctx, NIC_ID &_nic_id,
         
         // printf("nic_transmit: after dequeue, _bid_pkt_buf.snd_buf: %u\n", get_queue_len(_bid_pkt_buf.snd_buf));
         
-        uint32_t now_queue_len = 0; // record the queue length when a packet comes in real time
+        uint32_t now_queue_len = 0; // record the queue length when a packet comes in run time
         int loc;  // FIXME
         for (loc = get_queue_len(_tx_history); loc > 0; loc--) {
             TXElem tx_elem = {0, 0};
@@ -1390,8 +1572,10 @@ inline void nic_transmit(Engine &ctx, NIC_ID &_nic_id,
 
         // tail drop
         if ((pkt.payload_len+now_queue_len) > BUF_SIZE) {
+            PrintPkt(pkt, "pkt drop: ");
             continue;
         }
+        // printf("nic_transmit ip_pkt_len: %hu\n", pkt.ip_pkt_len);
 
         pkt.dequeue_time = (pkt.enqueue_time > _sim_time.sim_time ? pkt.enqueue_time : _sim_time.sim_time) + \
                              (pkt.ip_pkt_len*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000);
@@ -1401,9 +1585,10 @@ inline void nic_transmit(Engine &ctx, NIC_ID &_nic_id,
         TXElem tx_elem = {pkt.dequeue_time, pkt.ip_pkt_len};
         _enqueue(_tx_history, tx_elem); 
 
+
         // ECN marking  
         LCG lcg(48271, 0, 2147483647, _seed.seed);
-        float mark_prob;
+        float mark_prob = 0.0;
         float rand_num;
         if (now_queue_len <= K_MIN && pkt.ecn == ECN_MARK::NO) {
             pkt.ecn = ECN_MARK::NO;
@@ -1411,19 +1596,24 @@ inline void nic_transmit(Engine &ctx, NIC_ID &_nic_id,
         else if (now_queue_len > K_MIN && now_queue_len < K_MAX) {
             mark_prob = (now_queue_len-K_MIN)*P_MAX/(K_MAX-K_MIN);
             rand_num = (lcg.next()%1000)/1000.0;
-            // // printf("rand num is : %f\n", rand_num);
+            // printf("rand num is : %f\n", rand_num);
             if (rand_num < mark_prob) {pkt.ecn = ECN_MARK::YES;}
             _seed.seed = lcg.next();
         }
         else {
             pkt.ecn = ECN_MARK::YES;
         }
+        // if (_nic_id.nic_id == 0 || _nic_id.nic_id == 1) {
+        //     printf("_nic_id: %d, queue length: %d, mark_prob: %f, pkt.ecn: %u\n", _nic_id.nic_id, now_queue_len, mark_prob, (uint32_t)pkt.ecn);
+        // }
 
         _enqueue(ctx.get<PktBuf>(in_port), pkt);
 
-        #if PRINT_PKT_LOG
-        PrintPkt(pkt, "nic_transmit: ");
-        #endif
+        // #if PRINT_PKT_LOG
+        // if (_nic_id.nic_id == 0 || _nic_id.nic_id == 1) {
+        //     PrintPkt(pkt, "nic_transmit: ");
+        // }
+        // #endif
 
         _sim_time.sim_time = pkt.dequeue_time;
     }
@@ -1444,19 +1634,7 @@ void printBits(T value) {
     // printf("\n");
 }
 
-inline void PrintPath(uint32_t *path, uint8_t path_len) {
-    printf("path: length: %d: ", path_len);
-    for(int32_t i = 0; i < path_len/2; i++) {
-        // for (int32_t k = 2*i; k < 2 * (i+1); k++) {
-        printf("(%d, %d), ", path[2*i], path[2*i+1]);
-    }
-    printf("\n");
-    // for(int32_t i = 0; i < path_len; i++) {
-    //     // for (int32_t k = 2*i; k < 2 * (i+1); k++) {
-    //     // printf("%d, ", path[i]);
-    // }
-    // // printf("\n");
-}
+
 
 inline void set_forward_plan(Engine &ctx,
                             LocalPortID &_local_port_id,
@@ -1471,13 +1649,17 @@ inline void set_forward_plan(Engine &ctx,
 
     #if PRINT_SYS_LOG
     if (_global_port_id.global_port_id == 0) {
-        printf("\n\n*******Enter into set_forward_plan sys*********\n\n");
+        printf("\n\n*******Enter into set_forward_plan sys*********\n");
         printf("start _sim_time.sim_time: %ld, end_time: %ld\n", _sim_time.sim_time, end_time);
     }
     #endif
     //reset
-    for (uint32_t i = 0; i < INPORT_NUM; i++) {_forward_plan.forward_plan[i] = 0;}
+    Entity sw_ett = ctx.data()._switches[_switch_id.switch_id];
+    // uint32_t start_port_id = ctx.get<StartPortID>(sw_id).start_port_id;
+    // uint32_t stop_port_id = ctx.get<StopPortID>(sw_id).stop_port_id;
+    uint32_t port_num = ctx.get<PortNum>(sw_ett).port_num;
 
+    for (uint32_t i = 0; i < port_num; i++) {_forward_plan.forward_plan[i] = 0;}
 
     // // printf("_switch_id: %d, _local_port_id: %d, global_port_id: %d\n", \
     //         _switch_id.switch_id, _local_port_id.local_port_id, _global_port_id.global_port_id);
@@ -1511,12 +1693,15 @@ inline void set_forward_plan(Engine &ctx,
         if (pkt.pkt_type != PktType::PFC_PAUSE && pkt.pkt_type != PktType::PFC_RESUME) {
             int32_t sw_idx = _switch_id.switch_id;
             //// printf("sw_idx: %d, ", sw_idx);
-            Entity sw_id = ctx.data()._switches[sw_idx];
+            Entity sw_ett = ctx.data()._switches[sw_idx];
             // hash
             // uint32_t port_idx = crc32_hash(pkt.src, pkt.dst, );             
             //
-            // int32_t next_hop_link_idx = ctx.get<FIBTable>(sw_id).fib_table[pkt.dst][pkt.flow_id];
-            int32_t next_hop_link_idx = ctx.get<FIBTable>(sw_id).fib_table[pkt.dst][0];
+            // int32_t next_hop_link_idx = ctx.get<FIBTable>(sw_ett).fib_table[pkt.dst][pkt.flow_id];
+            int32_t next_hop_idx = pkt.flow_id % ctx.data().next_hop_num[ctx.data().num_net_npu+_switch_id.switch_id][pkt.dst];
+            int32_t next_hop_link_idx = ctx.get<FIBTable>(sw_ett).fib_table[pkt.dst][next_hop_idx];
+            
+            // int32_t next_hop_link_idx = ctx.get<FIBTable>(sw_ett).fib_table[pkt.dst][0];
             _forward_plan.forward_plan[next_hop_link_idx] = _forward_plan.forward_plan[next_hop_link_idx] | (1<<idx);
         }
         //  broadcast PFC pause/resume frame into all egress port excepting for the current port itself
@@ -1531,7 +1716,7 @@ inline void set_forward_plan(Engine &ctx,
                     ctx.get<PktQueue>(e_port).queue_pfc_state[pkt.flow_id] = PFCState::RESUME;
             }
 
-            for (uint32_t i = 0; i < INPORT_NUM; i++) { // broadcast
+            for (uint32_t i = 0; i < port_num; i++) { // broadcast
                 if (i != _local_port_id.local_port_id) 
                     _forward_plan.forward_plan[i] = _forward_plan.forward_plan[i] | (1<<idx);
             }
@@ -1539,14 +1724,14 @@ inline void set_forward_plan(Engine &ctx,
 
         idx += 1;
     }
-    // // printf("switch_id %d, local_port_id: %d\n", _switch_id.switch_id,_local_port_id.local_port_id);
-    // if (_switch_id.switch_id == 1 && _local_port_id.local_port_id == 2) {
+    // printf("switch_id %d, local_port_id: %d\n", _switch_id.switch_id,_local_port_id.local_port_id);
+    // if (_switch_id.switch_id == 0 && _local_port_id.local_port_id == 0) {
     //     // printf("Forward plan of the %d-th ingress port in %d-th switch: \n", _local_port_id.local_port_id, _switch_id.switch_id);
     //     for(CountT i = 0; i < INPORT_NUM; i++) {
     //         // printf("towards %d-th egress port: ", i);
     //         printBits<uint16_t>(_forward_plan.forward_plan[i]);
     //     }
-    //     // printf("\n");
+    //     printf("\n");
     // }
 }
 
@@ -1560,27 +1745,40 @@ inline void _forward(Engine &ctx,
                     PktQueue &_queue,
                     SwitchID &_switch_id,
                     SimTime &_sim_time,
-                    SimTimePerUpdate &_sim_time_per_update)
+                    SimTimePerUpdate &_sim_time_per_update,
+                    Seed &_seed)
 {
-    // FIXME: modify it to support the any shape of network topo
     int64_t end_time = _sim_time.sim_time + _sim_time_per_update.sim_time_per_update;
+
+    Entity sw_id = ctx.data()._switches[_switch_id.switch_id];
+    uint32_t start_port_id = ctx.get<StartPortID>(sw_id).start_port_id;
+    uint32_t stop_port_id = ctx.get<StopPortID>(sw_id).stop_port_id;
+    uint32_t port_cnt = stop_port_id - start_port_id + 1;
 
     #if PRINT_SYS_LOG
     if (_global_port_id.global_port_id == 0) {
         printf("\n*******Enter into _forward sys*********\n");
         printf("start _sim_time.sim_time: %ld, end_time: %ld\n", _sim_time.sim_time, end_time);
+        printf("_switch_id.switch_id: %d, start_port_id: %d, stop_port_id: %d\n", _switch_id.switch_id, start_port_id, stop_port_id);
     }
     #endif
+
+    // USE LCG to generate a random start position
+    LCG lcg(48271, 0, 2147483647, _seed.seed);
+
+    uint32_t offset = port_cnt > 0 ? (lcg.next() % port_cnt) : 0;
+    _seed.seed = lcg.next();
+
     // if (_global_port_id.global_port_id == 5) {
-    //     return;
+    //     printf("start port: %d\n", start_port_id + (offset % port_cnt));
     // }
+
     Entity in_port;
-    uint16_t fwd_bitmap;
-    // int32_t _numInPort = ctx.data().numInPort;
+    uint32_t fwd_bitmap;
 
-    // coupled with fattree topology
-    for(CountT i = _switch_id.switch_id*K_ARY; i < (_switch_id.switch_id+1)*K_ARY; i++) { 
-
+    // for(CountT i = start_port_id; i <= stop_port_id; i++) { 
+    for (uint32_t cnt = 0; cnt < port_cnt; cnt++) {
+        uint32_t i = start_port_id + ((offset + cnt) % port_cnt);
         in_port = ctx.data().inPorts[i];
         fwd_bitmap = ctx.get<ForwardPlan>(in_port).forward_plan[_local_port_id.local_port_id];
 
@@ -1607,6 +1805,7 @@ inline void _forward(Engine &ctx,
                 pkt.path[pkt.path_len] = ctx.get<SwitchID>(in_port).switch_id;
                 pkt.path[pkt.path_len+1] = ctx.get<LocalPortID>(in_port).local_port_id;
                 pkt.path_len += 2;
+                
                 assert(pkt.path_len <= MAX_PATH_LEN);
                 
                 if (pkt.pkt_type == PktType::PFC_PAUSE || pkt.pkt_type == PktType::PFC_RESUME)  {
@@ -1614,12 +1813,15 @@ inline void _forward(Engine &ctx,
                 }
 
                 // // printf("%d", pkt.flow_id); 
-                uint8_t queue_idx = pkt.flow_priority;
+                uint8_t queue_idx = pkt.flow_priority; 
                 _enqueue(_queue.pkt_buf[queue_idx], pkt);
                 
-                #if PRINT_PKT_LOG
-                PrintPkt(pkt, "forward: ");
-                #endif
+                // if (_global_port_id.global_port_id == 2 || _global_port_id.global_port_id == 5) {
+                // #if PRINT_PKT_LOG
+                // if (_global_port_id.global_port_id == 2) {
+                // PrintPkt(pkt, "forward: ");
+                // }
+                // #endif
             }
             num += 1;
 
@@ -1651,7 +1853,6 @@ inline void remove_pkts(Engine &ctx,
         // // printf("end_time: %lld\n", end_time);
     }
     #endif
-
 
     uint16_t q_len = get_queue_len(_queue);
     // if (_global_port_id.global_port_id == 6) {
@@ -1711,7 +1912,6 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
 
     uint8_t queue_num = ctx.get<QueueNumPerPort>(ctx.data()._switches[_switch_id.switch_id]).queue_num_per_port;
     // strict priority(SP) to schedule packets 
-    //// printf("queue_num: %d\n", queue_num);
     for (uint8_t i = 0; i < queue_num; i++) {
         if (get_queue_len(_pkt_queue.pkt_buf[i]) <= 0) continue;
 
@@ -1720,13 +1920,10 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
             continue;
         }
 
-        // if (_global_port_id.global_port_id == 2) PrintQueue(_pkt_queue.pkt_buf[i]);
-        // // printf("before insertionSort: \n");
+
         insertionSort(_pkt_queue.pkt_buf[i]); // Sorting the packets in the queue using Insertion Sort
         // // printf("after insertionSort: \n");
 
-        // if (_global_port_id.global_port_id == 2) PrintQueue(_pkt_queue.pkt_buf[i]);
-        
         // uint16_t pkt_cnt = 0;
         while(_sim_time.sim_time < end_time) {
             // if (_sim_time.sim_time >= end_time) break;
@@ -1738,51 +1935,106 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
             if(pkt.enqueue_time >= end_time) break;
             _dequeue(_pkt_queue.pkt_buf[i], pkt);
 
-            uint32_t now_queue_len = 0; // record the queue length when a packet comes in real time
-            int loc;  // FIXME
-            for (loc = get_queue_len(_tx_history); loc > 0; loc--) {
-                TXElem tx_elem = {0, 0};
-                fetch_elem(_tx_history, loc-1, tx_elem);
-                // // printf("tx_elem.dequeue_time: %ld\n", tx_elem.dequeue_time);
-                if (pkt.enqueue_time < tx_elem.dequeue_time) {
-                    now_queue_len += tx_elem.ip_pkt_len;
-                }
-                else {
-                    break;
-                }
-            }
-            
-            // // printf("global port id: %d, now the queue len: %d\n", _global_port_id.global_port_id, now_queue_len);
-            // // printf("clear tx_history: \n");
+            // uint32_t now_queue_len = 0; // record the queue length when a packet comes in real time
+            // int loc;  // FIXME
+            // for (loc = get_queue_len(_tx_history); loc > 0; loc--) {
+            //     TXElem tx_elem = {0, 0};
+            //     fetch_elem(_tx_history, loc-1, tx_elem);
+            //     // // printf("tx_elem.dequeue_time: %ld\n", tx_elem.dequeue_time);
+            //     if (pkt.enqueue_time < tx_elem.dequeue_time) {
+            //         now_queue_len += tx_elem.ip_pkt_len;
+            //     }
+            //     else {
+            //         break;
+            //     }
+            // }
 
-            if (loc > 0) {
-                TXElem tmp_tx_elem;
-                rm_queue_range(_tx_history, tmp_tx_elem, 0, loc); // FIXME, only handle when using 1 priority queue
+
+            // if (loc > 0) {
+            //     TXElem tmp_tx_elem;
+            //     rm_queue_range(_tx_history, tmp_tx_elem, 0, loc); // FIXME, only handle when using 1 priority queue
+            // }
+
+
+            // printf("transmit ip_pkt_len: %hu\n", pkt.ip_pkt_len);
+            pkt.dequeue_time = (pkt.enqueue_time > _sim_time.sim_time ? pkt.enqueue_time : _sim_time.sim_time) + \
+                               (pkt.ip_pkt_len*8*1.0/_link_rate.link_rate)*(1000*1000*1000);
+
+
+            uint32_t now_queue_len = 0;
+            
+            // // iterate all the remaining packets in the pkt queue to calculate the queueu length
+            // uint16_t remaining_pkts = get_queue_len(_pkt_queue.pkt_buf[i]);
+            // for (uint16_t idx = 0; idx < remaining_pkts; idx++) {
+            //     Pkt queued_pkt;
+            //     fetch_elem(_pkt_queue.pkt_buf[i], idx, queued_pkt);
+                
+            //     // Determine: whether the queued packet is in the processing period of the current packet
+            //     // Condition: The enqueue time of the queued packet >= enqueue time of the current packet 
+            //     // AND enqueue time of the queued packet < dequeue time of the current packet
+            //     if (queued_pkt.enqueue_time >= pkt.enqueue_time && 
+            //         queued_pkt.enqueue_time < pkt.dequeue_time) {
+            //         now_queue_len += queued_pkt.ip_pkt_len;
+            //     }
+
+            // }
+
+            
+            // iterate all the remaining packets in the pkt queue to calculate the queue length
+            uint16_t remaining_pkts = get_queue_len(_pkt_queue.pkt_buf[i]);
+            uint16_t idx = 0;
+            while (idx < remaining_pkts) {
+                Pkt queued_pkt;
+                fetch_elem(_pkt_queue.pkt_buf[i], idx, queued_pkt);
+                
+                // Determine: whether the queued packet is in the processing period of the current packet
+                // Condition: The enqueue time of the queued packet >= enqueue time of the current packet 
+                // AND enqueue time of the queued packet < dequeue time of the current packet
+                if (queued_pkt.enqueue_time >= pkt.enqueue_time && 
+                    queued_pkt.enqueue_time < pkt.dequeue_time) {
+                    
+                    // Check if adding this packet would exceed buffer size
+                    if ((now_queue_len + queued_pkt.ip_pkt_len) > BUF_SIZE) {
+                        // Drop the packet by removing it from the queue
+                        Pkt dropped_pkt;
+                        // Remove the packet at index idx
+                        for (uint16_t j = idx; j < remaining_pkts - 1; j++) {
+                            Pkt temp_pkt;
+                            fetch_elem(_pkt_queue.pkt_buf[i], j + 1, temp_pkt);
+                            _pkt_queue.pkt_buf[i].pkts[(_pkt_queue.pkt_buf[i].head + j) % PKT_BUF_LEN] = temp_pkt;
+                        }
+                        _pkt_queue.pkt_buf[i].tail = (_pkt_queue.pkt_buf[i].tail - 1 + PKT_BUF_LEN) % PKT_BUF_LEN;
+                        _pkt_queue.pkt_buf[i].cur_num--;
+                        
+                        remaining_pkts--;
+                        // Don't increment idx, as the next packet has moved to current position
+                        continue;
+                    } else {
+                        now_queue_len += queued_pkt.ip_pkt_len;
+                    }
+                }
+                idx++;
             }
+
+
+            pkt.enqueue_time = pkt.dequeue_time + _ss_link_delay.SS_link_delay; //the name of SS_link_delay is not accurate expression
 
             // tail drop
             if ((pkt.payload_len+now_queue_len) > BUF_SIZE) {
+                PrintPkt(pkt, "pkt drop: ");
                 continue;
             }
 
-            //uint16_t pkt_size = pkt.header_len + pkt.payload_len;
-            pkt.dequeue_time = (pkt.enqueue_time > _sim_time.sim_time ? pkt.enqueue_time : _sim_time.sim_time) + \
-                               (pkt.ip_pkt_len*8*1.0/_link_rate.link_rate)*(1000*1000*1000);
-            pkt.enqueue_time = pkt.dequeue_time + _ss_link_delay.SS_link_delay; //FIXME
-
-            TXElem tx_elem = {pkt.dequeue_time, pkt.ip_pkt_len};
-            _enqueue(_tx_history, tx_elem); 
+            // TXElem tx_elem = {pkt.dequeue_time, pkt.ip_pkt_len};
+            // _enqueue(_tx_history, tx_elem); 
 
             // path tracer
             pkt.path[pkt.path_len] = _switch_id.switch_id;
             pkt.path[pkt.path_len+1] = _local_port_id.local_port_id;
             pkt.path_len += 2;
-            
-            // ECN marking  
-            // pkt.ecn = ECN_MARK::NO;
-            // Create a LCG with parameters: a = 48271, c = 0, modulus = 2147483647, seed = 1
+
             LCG lcg(48271, 0, 2147483647, _seed.seed);
-            float mark_prob;
+            float mark_prob = 0;
             float rand_num;
             if (now_queue_len <= K_MIN && pkt.ecn == ECN_MARK::NO) {
                 pkt.ecn = ECN_MARK::NO;
@@ -1790,20 +2042,13 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
             else if (now_queue_len > K_MIN && now_queue_len < K_MAX) {
                 mark_prob = (now_queue_len-K_MIN)*P_MAX/(K_MAX-K_MIN);
                 rand_num = (lcg.next()%1000)/1000.0;
-                // // printf("rand num is : %f\n", rand_num);
+                // printf("rand num is : %f\n", rand_num);
                 if (rand_num < mark_prob) {pkt.ecn = ECN_MARK::YES;}
                 _seed.seed = lcg.next();
             }
             else {
                 pkt.ecn = ECN_MARK::YES;
             }
-
-            // if (pkt.ecn == ECN_MARK::YES) {
-                //// printf("pkt.ecn: %d, rand_num: %f, mark_prob: %f\n", pkt.ecn, rand_num, mark_prob);
-            //PrintPkt(pkt, "DATA pkt is marked with ecn: ");
-            // }
-            // float rand_num = (lcg.next()%1000)/1000.0;
-            // // printf("rand num is : %f\n", rand_num);
 
             //move packet from this egress port to next hop port / the dest host
             Entity next_hop_ett;
@@ -1812,7 +2057,9 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
                 next_hop_ett = ctx.data().inPorts[_next_hop.next_hop];
                 _enqueue(ctx.get<PktBuf>(next_hop_ett), pkt);
                 #if PRINT_PKT_LOG
+                if (_global_port_id.global_port_id == 2) {
                 PrintPkt(pkt, "switch transmit to switch: ");
+                }
                 #endif
             }
             else {
@@ -1820,25 +2067,16 @@ inline void transmit(Engine &ctx, SchedTrajType sched_traj_type,
                 next_hop_ett = ctx.data()._nics[_next_hop.next_hop];
                 _enqueue(ctx.get<BidPktBuf>(next_hop_ett).recv_buf, pkt);
                 #if PRINT_PKT_LOG
+                if (_global_port_id.global_port_id == 2) {
                 PrintPkt(pkt, "switch transmit to NIC: ");
+                }
                 #endif
-
-                // PrintPath(pkt.path, pkt.path_len);
             }
-            // if (_global_port_id.global_port_id == 4) continue;
-            //
-            // if (pkt.pkt_type == PktType::ACK || pkt.pkt_type == PktType::NACK) {
-            //     // printf("pkt_type: %d, switch_id: %d, global_port_id: %d, NextHopType: %d, next hop link: %d, src: %d --> dst: %d, payload_len: %d, sq_num: %lld, dequeue_time: %lld, enqueue_time: %lld\n", \
-            //             pkt.pkt_type, _switch_id.switch_id, _global_port_id.global_port_id, next_hop_type, _next_hop.next_hop, pkt.src, pkt.dst, pkt.payload_len, pkt.sq_num, pkt.dequeue_time, pkt.enqueue_time);
-            // }
 
-            
-            // if (pkt_cnt++ < 7) {
-            //     _enqueue(ctx.get<PktBuf>(next_hop_ett), pkt);
-            //     // pkt_cnt = 0;
+            // if (_global_port_id.global_port_id == 2) {
+            // //     // printf("\n*******Enter into transmit sys*********\n");
+            //     printf("Transmit sys: global_port_id: %d, queue length: %d, mark_prob: %f, pkt.ecn: %u, start _sim_time.sim_time: %ld\n", _global_port_id.global_port_id, now_queue_len, mark_prob, (uint32_t)pkt.ecn, _sim_time.sim_time);
             // }
-            // _seed.seed = lcg.next()%1000;
-            //// printf("enqueue normal pkt: \n");
 
             _sim_time.sim_time = pkt.dequeue_time;
 
@@ -1883,6 +2121,30 @@ inline void nic_receive(Engine &ctx, NIC_ID &_nic_id,
     #endif
     // Entity recv_flow = ctx.data().recv_flows[0][0];
 
+    // printf("=== recv_flows for nic_id: %d ===\n", _nic_id.nic_id);
+    // auto &recv_map = ctx.data().recv_flows[_nic_id.nic_id];
+    // for (auto it = recv_map.begin(); it != recv_map.end(); ++it) {
+    //     auto &entry = *it;
+    //     Entity ent = entry.value;
+    //     int src = ctx.get<Src>(ent).src;
+    //     int dst = ctx.get<Dst>(ent).dst;
+    //     int64_t start_time = ctx.get<StartTime>(ent).start_time;
+    //     printf("recv_flows: src=%d, dst=%d, flow_id=%lu, start_time: %ld\n",
+    //         src, dst, entry.key, start_time);
+    // }
+    
+    // printf("=== snd_recv_flows for nic_id: %d ===\n", _nic_id.nic_id);
+    // auto &snd_recv_map = ctx.data().snd_recv_flows[_nic_id.nic_id];
+    // for (auto it = snd_recv_map.begin(); it != snd_recv_map.end(); ++it) {
+    //     auto &entry = *it;
+    //     Entity ent = entry.value;
+    //     int src = ctx.get<Src>(ent).src;
+    //     int dst = ctx.get<Dst>(ent).dst;
+    //     int64_t start_time = ctx.get<StartTime>(ent).start_time;
+    //     printf("snd_recv_flows: src=%d, dst=%d, flow_id=%lu, start_time: %ld\n",
+    //         src, dst, entry.key, start_time);
+    // }
+
     Pkt pkt;
     // PktBuf recv_buf;
     while (_sim_time.sim_time < end_time) {
@@ -1892,27 +2154,44 @@ inline void nic_receive(Engine &ctx, NIC_ID &_nic_id,
         // PrintPkt(pkt, "nic receive buffer");
         // recv flow entity
         Entity recv_flow = Entity::none();
-        if (pkt.pkt_type == PktType::DATA ) {
-            printf("data packet: pkt.src: %d, pkt.dst: %d, pkt.flow_id: %d\n", pkt.src, pkt.dst, pkt.flow_id);
-            recv_flow = ctx.data().recv_flows[pkt.dst][pkt.flow_id];
+        if (pkt.pkt_type == PktType::DATA) {
+            #if PRINT_PKT_LOG
+            PrintPkt(pkt, "nic_receive(data): ");
+            // printf("nic_receive, data pkt: nic_id: %u, data packet: pkt.src: %u, pkt.dst: %u, pkt.flow_id: %u\n", _nic_id.nic_id, pkt.src, pkt.dst, (uint32_t)pkt.flow_id);
+            // PrintPath(pkt.path, pkt.path_len);
+            #endif
+
+            auto *entry = ctx.data().recv_flows[pkt.dst].find(pkt.flow_id); 
+            if (entry) {
+                recv_flow = entry->value;
+            } // else recv_flow = Entity::none()
         }
         else { //ACK/NACK/CNP
-            printf("non-data(ACK/NACK/CNP) packet: pkt.flow_id: %d\n", pkt.flow_id);
-            recv_flow = ctx.data().snd_recv_flows[pkt.dst][pkt.flow_id]; // dst and src switch in //ACK/NACK/CNP pkt
+            #if PRINT_PKT_LOG
+            PrintPkt(pkt, "nic_receive(//ACK/NACK/CNP): ");
+            // printf("nic_receive, non-data pkt: nic_id: %u, non-data(ACK/NACK/CNP) packet: pkt.src: %u, pkt.dst: %u, pkt.flow_id: %u\n", _nic_id.nic_id, pkt.src, pkt.dst, (uint32_t)pkt.flow_id);
+            // PrintPath(pkt.path, pkt.path_len);
+            #endif
+
+            auto *entry = ctx.data().snd_recv_flows[pkt.dst].find(pkt.flow_id); 
+            if (entry) {
+                recv_flow = entry->value;
+            }
         }
 
         if (recv_flow == Entity::none()) {
-            printf("Error: no flow entity exist for the pkt(src: %d, dst: %d, flow_id: %lu\n", pkt.src, pkt.dst, pkt.flow_id);
-            return;
+            printf("Error: no flow entity exist for the pkt(maybe flow already finished, but extral pkts are injected into network)(src: %u, dst: %u, flow_id: %u\n", pkt.src, pkt.dst, (uint32_t)pkt.flow_id);
+            continue;
+            // return;
         }
-        // printf(" _enqueue(ctx.get<PktBuf>(recv_flow), pkt)\n");
-        // recv_buf = ctx.get<PktBuf>(recv_flow);
+        // PktBuf recv_buf = ctx.get<PktBuf>(recv_flow);
+        // printf("pkt.pkt_type: %hhu, before enqueue(len): %d\n", pkt.pkt_type, get_queue_len(ctx.get<PktBuf>(recv_flow)));
         _enqueue(ctx.get<PktBuf>(recv_flow), pkt);
-        // printf("pkt.pkt_type: %hhu, recv recv_queue length: %d\n", pkt.pkt_type, get_queue_len(ctx.get<PktBuf>(recv_flow)));
+        // printf("pkt.pkt_type: %hhu, after enqueue(len): %d\n", pkt.pkt_type, get_queue_len(ctx.get<PktBuf>(recv_flow)));
  
         // printf("5\n");
         // PrintPath(pkt.path, pkt.path_len);
-        if(pkt.enqueue_time >= end_time) break;
+        // if(pkt.enqueue_time >= end_time) break;
     }
     //_sim_time.sim_time = end_time;
 }
@@ -1958,32 +2237,36 @@ inline void flow_receive(Engine &ctx, FlowID &_flow_id, PktBuf &_recv_queue,
             _enqueue(ctx.get<AckPktBuf>(snd_flow_entt), pkt); //enqueue into the ack_pkt_buf
 
             // printf("flow_id: %d\n", _flow_id.flow_id);
-            #if PRINT_PKT_LOG
+            #if PRINT_SEND_RECV_PKT_LOG
             PrintPkt(pkt, "ACK/NACK received by sender's receiver: ");
             #endif
         }
         else { //DATA pkt is received by receiver
             uint16_t pkt_size = pkt.header_len + pkt.payload_len;
-            _sim_time.sim_time += (pkt_size*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000);
+
+            // _sim_time.sim_time += (pkt_size*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000);
+            _sim_time.sim_time = (_sim_time.sim_time > pkt.enqueue_time ? _sim_time.sim_time : pkt.enqueue_time)  +  (pkt_size*8*1.0/_nic_rate.nic_rate)*(1000*1000*1000);
 
             // printf("flow_id: %d\n", _flow_id.flow_id);
             // printf("src: %d recv: %d, expected_recv_bytes: %ld\n", recv_flow_queue.recv_flow[0].src, recv_flow_queue.recv_flow[0].dst, _recv_bytes.recv_bytes); 
-            #if PRINT_PKT_LOG
+            #if PRINT_SEND_RECV_PKT_LOG
             PrintPkt(pkt, "DATA received by receiver: ");
             #endif
             uint32_t path[MAX_PATH_LEN];
             memset(path, 0, MAX_PATH_LEN*sizeof(uint32_t));
 
+
+            Pkt ack_pkt;
+            int64_t sq_num;
+
             // int64_t expect_byte = + payload_len;
             uint32_t ack_src = pkt.dst; //recv_flow_queue.recv_flow[0].dst;
             uint32_t ack_dst = pkt.src; //recv_flow_queue.recv_flow[0].src;
-
-            int64_t dequeue_time = _sim_time.sim_time + 1;
-            int64_t enqueue_time = _sim_time.sim_time + 1 + _HS_link_delay.HS_link_delay;
             
+            int64_t dequeue_time = _sim_time.sim_time + 1;
+            int64_t enqueue_time = dequeue_time;
+            _sim_time.sim_time = _sim_time.sim_time > pkt.dequeue_time ? _sim_time.sim_time : pkt.dequeue_time;
 
-            int64_t sq_num;
-            Pkt ack_pkt;
             if (pkt.sq_num == _recv_bytes.recv_bytes) { // packet order is right: generate ACK
                 _recv_bytes.recv_bytes += pkt.payload_len;
                 sq_num = _recv_bytes.recv_bytes;
@@ -2006,12 +2289,21 @@ inline void flow_receive(Engine &ctx, FlowID &_flow_id, PktBuf &_recv_queue,
             if (recv_snd_flow_entt == Entity::none()) {return;}
 
             _enqueue(ctx.get<PktBuf>(recv_snd_flow_entt), ack_pkt);
-            #if PRINT_PKT_LOG
+            
+            #if PRINT_SEND_RECV_PKT_LOG
             PrintPkt(ack_pkt, "ACK/NACK generated by receiver: ");
             #endif
             // printf("pkt.ecn: %d\n", pkt.ecn);
             // packet with ecn marking, generate a cnp packet
-            if (pkt.ecn == ECN_MARK::YES && (_sim_time.sim_time - _last_cnp_timestamp.last_cnp_timestamp) >= CNP_DURATION) { 
+            // if (pkt.ecn == ECN_MARK::YES && (_last_cnp_timestamp.last_cnp_timestamp == 0 || (_sim_time.sim_time - _last_cnp_timestamp.last_cnp_timestamp) >= CNP_DURATION)) { 
+            // printf("Debug Info:\n");
+            // printf("_sim_time.sim_time: %ld\n", _sim_time.sim_time);
+            // printf("pkt.ecn: %d\n", pkt.ecn);
+            // printf("ack_pkt.pkt_type: %d\n", ack_pkt.pkt_type);
+            // printf("_last_cnp_timestamp.last_cnp_timestamp: %ld\n", _last_cnp_timestamp.last_cnp_timestamp);
+
+        
+            if (pkt.ecn == ECN_MARK::YES && (_last_cnp_timestamp.last_cnp_timestamp == 0 || (_sim_time.sim_time - _last_cnp_timestamp.last_cnp_timestamp) >= CNP_DURATION)) { 
             // if (pkt.ecn == ECN_MARK::YES) { 
                 Pkt cnp_pkt;
                 PktType pkt_type = PktType::CNP;
@@ -2020,7 +2312,7 @@ inline void flow_receive(Engine &ctx, FlowID &_flow_id, PktBuf &_recv_queue,
                            pkt.flow_id, enqueue_time, dequeue_time, flow_priority, pkt_type, path, 0, ECN_MARK::YES);
 
                 _enqueue(ctx.get<PktBuf>(recv_snd_flow_entt), cnp_pkt);
-                #if PRINT_PKT_LOG
+                #if PRINT_SEND_RECV_PKT_LOG
                 PrintPkt(cnp_pkt, "CNP generated by receiver: ");
                 #endif
                 _last_cnp_timestamp.last_cnp_timestamp = _sim_time.sim_time;
@@ -2031,703 +2323,156 @@ inline void flow_receive(Engine &ctx, FlowID &_flow_id, PktBuf &_recv_queue,
 }
 
 
-
-
-
-
-
-
-
-
-
-
-    // -----------------------------------------------------------------------------------
-
-    // 将整数数组解析为 ChakraNodes 数组
-    int parseChakraNodes(const ChakraNodesData &chakraNodesData, int row, ChakraNode parsedNodes[], int intArrayLength = chakra_nodes_data_length, int maxNodes = MAX_CHAKRA_NODES)
-    {
-
-        int validNodes = 0; // 有效节点计数
-
-        for (int i = 0; i < maxNodes; ++i)
-        {
-            int baseIndex = i * INTS_PER_NODE;
-            if (baseIndex + INTS_PER_NODE > intArrayLength)
-                break; // 确保不越界
-
-            // 解析单个节点
-            for (int j = 0; j < 20; ++j)
-            {
-                parsedNodes[validNodes].name[j] = chakraNodesData.data[row][baseIndex + j];
-            }
-            baseIndex += 20;
-
-            parsedNodes[validNodes].type = (NodeType)chakraNodesData.data[row][baseIndex];
-            baseIndex += 1;
-
-            parsedNodes[validNodes].id = chakraNodesData.data[row][baseIndex];
-
-            // 初始节点没有id
-            if (parsedNodes[validNodes].id == -1)
-            {
-                parsedNodes[validNodes].id = 0;
-            }
-
-            baseIndex += 1;
-
-            for (int j = 0; j < 10; ++j)
-            {
-                parsedNodes[validNodes].data_deps[j] = chakraNodesData.data[row][baseIndex + j];
-            }
-            baseIndex += 10;
-
-            parsedNodes[validNodes].comm_para = ((uint64_t)chakraNodesData.data[row][baseIndex + 1] << 32) | chakraNodesData.data[row][baseIndex];
-            baseIndex += 2;
-
-            parsedNodes[validNodes].comm_size = ((uint64_t)chakraNodesData.data[row][baseIndex + 1] << 32) | chakraNodesData.data[row][baseIndex];
-            baseIndex += 2;
-
-            parsedNodes[validNodes].comm_src = ((uint64_t)chakraNodesData.data[row][baseIndex + 1] << 32) | chakraNodesData.data[row][baseIndex];
-            baseIndex += 2;
-
-            parsedNodes[validNodes].comm_dst = ((uint64_t)chakraNodesData.data[row][baseIndex + 1] << 32) | chakraNodesData.data[row][baseIndex];
-            baseIndex += 2;
-
-            parsedNodes[validNodes].involved_dim_1 = chakraNodesData.data[row][baseIndex];
-            parsedNodes[validNodes].involved_dim_2 = chakraNodesData.data[row][baseIndex + 1];
-            parsedNodes[validNodes].involved_dim_3 = chakraNodesData.data[row][baseIndex + 2];
-            baseIndex += 3;
-
-            parsedNodes[validNodes].durationMicros = chakraNodesData.data[row][baseIndex];
-            baseIndex += 1;
-
-            // 检查是否全为 0（表示补全区）
-            bool isPadding = true;
-            for (int j = i * INTS_PER_NODE; j < i * INTS_PER_NODE + INTS_PER_NODE; ++j)
-            {
-                if (chakraNodesData.data[row][j] != 0)
-                {
-                    isPadding = false;
-                    break;
-                }
-            }
-            if (isPadding)
-            {
-                break; // 忽略后续的补全区
-            }
-
-            // 完成一个节点解析后递增 validNodes
-            validNodes++;
-        }
-        return validNodes; // 返回有效节点的数量
-    }
-
-    int filterNoDependencyNodes(const ChakraNodes &chakraNodes, ChakraNode filteredNodes[], int maxNodes = CURRENT_EXEC_NODES_MAX)
-    {
-
-        int count = 0; // 无依赖节点计数
-
-        // 遍历所有节点
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; ++i)
-        {
-            const ChakraNode &node = chakraNodes.nodes[i];
-
-            // 跳过无效节点
-            if (node.type == NodeType::None)
-            {
-                continue;
-            }
-
-            // 检查是否没有依赖
-            bool hasDependency = false;
-            for (int j = 0; j < 10; ++j)
-            {
-                if (node.data_deps[j] != INVALID_DEPENDENCY)
-                {
-                    hasDependency = true;
-                    break;
-                }
-            }
-
-            // 如果没有依赖，添加到结果数组
-            if (!hasDependency)
-            {
-                if (count < maxNodes)
-                {
-                    filteredNodes[count++] = node;
-                }
-                else
-                {
-                    // 超过最大限制，停止添加
-                    break;
-                }
-            }
-        }
-
-        return count; // 返回无依赖节点的数量
-    }
-
-    void removeNode(ChakraNodes &chakraNodes, uint32_t nodeId)
-    {
-
-        // 遍历所有节点，找到目标节点并将其标记为无效
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; ++i)
-        {
-            ChakraNode &node = chakraNodes.nodes[i];
-
-            // 如果找到目标节点，标记为无效
-            if (node.id == nodeId)
-            {
-                node.type = NodeType::None; // 标记为无效节点
-                for (int j = 0; j < 10; ++j)
-                {
-                    node.data_deps[j] = INVALID_DEPENDENCY; // 清空依赖
-                }
-                node.id = INVALID_DEPENDENCY; // 将节点 ID 设置为无效
-                break;
-            }
-        }
-
-        // 遍历所有节点，移除对目标节点的依赖
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; ++i)
-        {
-            ChakraNode &node = chakraNodes.nodes[i];
-
-            // 跳过无效节点
-            if (node.type == NodeType::None)
-            {
-                continue;
-            }
-
-            // 检查并移除对目标节点的依赖
-            for (int j = 0; j < 10; ++j)
-            {
-                if (node.data_deps[j] == nodeId)
-                {
-                    node.data_deps[j] = INVALID_DEPENDENCY; // 设置为无效依赖
-                }
-            }
-        }
-    }
-
-    // network interface
-    // 获取当前仿真时间
-    // func
-    inline uint64_t getCurrentTime(Engine &ctx)
-    {
-        // return ctx.get<SimTime>(ctx.data().timer_entity).time;
-        Entity net_npu = ctx.data()._net_npus[0]; 
-        int64_t sim_time = ctx.get<SimTime>(net_npu).sim_time;
-        return sim_time;
-    }
-
-    // network interface
-    // 指示当前是否存在流发送
-    // func
-    inline bool isExistedFlow(Engine &ctx)
-    {
-        return false;
-    }
-
-    // network interface
-    // 增加仿真时间：使所有组件增加仿真时间
-    // func
-    inline void addSimtime(Engine &ctx, uint64_t t_ns)
-    {
-        // ctx.get<SimTime>(ctx.data().timer_entity).time += t_ns;
-    }
-
-    // network interface
-    // 设置流：
-    // func
-    // inline void setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t comm_size, uint32_t flow_id)
-    // {
-    //     printf("set flow id %d: %d->%d %d, \n", flow_id, comm_src, comm_dst, comm_size);
-    // }
-
-    // network interface
-    // 检测/获取流完成事件：返回流完成数量，同时把流完成事件赋值flows_finish
-    // func
-    // inline uint32_t checkFlowFinish(Engine &ctx, uint32_t npu_id, SysFlow flows_finish[])
-    // {
-    //     return 0;
-    // }
-
-    // inline void procssTime(Engine &ctx,
-    //                        SimTime &simTime)
-    // {
-    //     // simTime.time += (1000 * 1000000);
-    //     simTime.time += (1000);
-    //     printf("current time : %ld\n", simTime.time);
-    // }
-
-    uint64_t msToNs(uint64_t milliseconds)
-    {
-        return milliseconds * 1000000; // 1 ms = 1,000,000 ns
-    }
-
-    inline void skipTime_add_time(Engine &ctx, uint64_t t_relative_ns)
-    {
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; i++)
-        {
-            if (ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[i] != 0)
-            {
-                ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[i] = getCurrentTime(ctx) + t_relative_ns;
-                break;
-            }
-        }
-    }
-
-    // 自定义排序函数：从大到小冒泡排序
-    void customSortDescending(uint64_t *array, size_t length)
-    {
-        for (size_t i = 0; i < length - 1; ++i)
-        {
-            for (size_t j = 0; j < length - 1 - i; ++j)
-            {
-                if (array[j] < array[j + 1])
-                { // 从大到小比较
-                    // 交换两个元素
-                    uint64_t temp = array[j];
-                    array[j] = array[j + 1];
-                    array[j + 1] = temp;
-                }
-            }
-        }
-    }
-
-    inline uint64_t skipTime_sort_time_rMin(Engine &ctx)
-    {
-
-        // 找到第一个等于 0 的元素的位置
-        size_t zeroIndex = MAX_CHAKRA_NODES; // 默认没有找到 0
-
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; ++i)
-        {
-
-            if (ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[i] == 0)
-            {
-
-                zeroIndex = i;
-                break;
-            }
-        }
-
-        // 对第一个 0 之前的元素进行从大到小排序
-        if (zeroIndex > 0 && zeroIndex < MAX_CHAKRA_NODES)
-        {
-            uint64_t *array = ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs;
-            customSortDescending(array, zeroIndex);
-        }
-
-        return ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[zeroIndex];
-    }
-
-    inline void skipTime_remove_time(Engine &ctx, uint64_t x_ns)
-    {
-        // 找到第一个等于 0 的元素的位置
-        size_t zeroIndex = MAX_CHAKRA_NODES; // 默认没有找到 0
-        for (size_t i = 0; i < MAX_CHAKRA_NODES; ++i)
-        {
-            if (ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[i] != 0)
-            {
-                ctx.get<NextProcessTimes>(ctx.data().next_process_time_entity).times_abs[i] -= x_ns;
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    inline void init(Engine &ctx,
-                     ChakraNodesData &chakra_nodes_data)
-    {
-        printf("init npus.\n");
-        // 获取行数和列数
-        size_t rows = sizeof(chakra_nodes_data.data) / sizeof(chakra_nodes_data.data[0]);       // 总大小 / 单行大小
-        size_t cols = sizeof(chakra_nodes_data.data[0]) / sizeof(chakra_nodes_data.data[0][0]); // 单行大小 / 单个元素大小
-        size_t npu_nums = rows;
-        size_t npu_data_num = cols;
-        printf("sizeof(chakra_nodes_data.data):%d\n", sizeof(chakra_nodes_data.data));
-        printf("sizeof(chakra_nodes_data.data[0]:%d\n", sizeof(chakra_nodes_data.data[0]));
-        printf("npu_nums:%d\n", npu_nums);
-        printf("npu_data_num:%d\n", npu_data_num);
-
-        for (int32_t i = 0; i < npu_nums; i++)
-        {
-            Entity npuNode = ctx.makeEntity<NpuNode>();
-            ctx.get<NpuID>(npuNode).value = i;
-            int nodeCount = parseChakraNodes(chakra_nodes_data, i, ctx.get<ChakraNodes>(npuNode).nodes);
-            if(nodeCount==0)
-            {
-                ctx.destroyEntity(npuNode);
-                return;
-            }
-            ctx.get<HardwareResource>(npuNode) = HardwareResource();
-            ctx.get<ProcessingCompTask>(npuNode) = ProcessingCompTask();
-            ctx.get<ProcessingCommTasks>(npuNode) = ProcessingCommTasks();
-            ctx.get<ProcessingCommTasks>(npuNode).flow_id = i *FLOW_ID_MAX_LENGTH;
-            // ctx.get<Entity>(npuNode) = npuNode;
-
-            printf("npu %d: turn %d nodes.\n", i, nodeCount);
-            ctx.data().chakra_nodes_entities[i] = npuNode;
-        }
-
-        ctx.destroyEntity(ctx.data().init_entity);
-        printf("init npus over.\n");
-    }
-
-    inline void processNpuNodes(Engine &ctx,
-                                NpuID &id,
-                                ChakraNodes &chakraNodes,
-                                HardwareResource &hardwareResource,
-                                ProcessingCompTask &processingCompTask,
-                                ProcessingCommTasks &processingCommTasks)
-    {
-        if (SYS_LOG && id.value == 0)
-        {
-            printf("### sys1 ### : exec processNpuNodes.\n");
-        }
-
-        // append nodes
-        if (hardwareResource.one_task_finish)
-        {
-            ChakraNode current_exec_nodes[CURRENT_EXEC_NODES_MAX];
-            int count = filterNoDependencyNodes(chakraNodes, current_exec_nodes);
-            printf("total no dp node:%d\n", count);
-            // process no np nodes
-            for (size_t i = 0; i < count; i++)
-            {
-
-                ChakraNode node = current_exec_nodes[i];
-                // 会重复查找，已经在处理时，跳过
-                if (processingCommTasks.containsNodeId(node.id))
-                {
-                    continue;
-                }
-                if (hardwareResource.comp_ocupy && node.id == processingCompTask.node_id)
-                {
-                    continue;
-                }
-                if (SYS_LOG && id.value == 0)
-                {
-                    printf("----process node %d:----\n", current_exec_nodes[i].id);
-                }
-                switch (node.type)
-                {
-                case NodeType::COMP_NODE:
-                {
-                    if (!hardwareResource.comp_ocupy)
-                    {
-                        processingCompTask.time_finish_ns = getCurrentTime(ctx) + msToNs(node.durationMicros);
-                        if (SYS_LOG && id.value == 0)
-                        {
-                            printf("processingCompTask.time_finish_ns: %ld\n", processingCompTask.time_finish_ns);
-                        }
-                        processingCompTask.state = TaskState::START;
-                        processingCompTask.node_id = node.id;
-
-                        // set flag
-                        hardwareResource.comp_ocupy = true;
-
-                        // set skip time - add time.
-                        skipTime_add_time(ctx, processingCompTask.time_finish_ns);
-                    }
-                    else
-                    {
-                        if (SYS_LOG && id.value == 0)
-                        {
-                            printf("no comp hardware!");
-                        }
-                    }
-                    break;
-                }
-                case NodeType::COMM_SEND_NODE:
-                {
-
-                    ProcessingCommTask processingCommTask = ProcessingCommTask();
-                    if (SYS_LOG && id.value == 0)
-                    {
-                        printf("processingCommTask send %d -> %d .\n", node.comm_src, node.comm_dst);
-                    }
-                    processingCommTask.state = TaskState::START;
-                    processingCommTask.node_id = node.id;
-                    processingCommTask.flow_count = 1;
-                    processingCommTasks.addTask(processingCommTask);
-
-                    // create comm entity
-                    Entity process_e = ctx.makeEntity<ProcessComm_E>();
-                    ctx.get<NpuID>(process_e).value = id.value;
-                    ctx.get<NodeID>(process_e).value = node.id;
-                    uint32_t flow_id = processingCommTasks.getTotalFlowCount();
-                    ctx.get<TaskFlows>(process_e).flows[0] = SysFlow();
-                    ctx.get<TaskFlows>(process_e).flows[0].id = flow_id;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_size = node.comm_size;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_src = node.comm_src;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_dst = node.comm_dst;
-                    ctx.get<TaskFlows>(process_e).flows[0].state = TaskState::START;
-                    ctx.get<TaskFlows>(process_e).flows[0].is_send = true;
-
-                    ctx.data().node_flows_exec_entity[id.value][node.id]= process_e;
-                    uint64_t src=node.comm_src;
-                    uint64_t dst=node.comm_dst;
-                    if(MAX_MODE_16_LIMIT)
-                    {
-                        if(src>15)
-                        {
-                            src=0;
-                        }
-                        if(dst>15)
-                        {
-                            dst=15;
-                        }
-                    }
-
-                    setFlow(ctx, src, dst, node.comm_size, flow_id);
-
-                    break;
-                }
-                case NodeType::COMM_RECV_NODE:
-                {
-                    ProcessingCommTask processingCommTask = ProcessingCommTask();
-                    if (SYS_LOG && id.value == 0)
-                    {
-                        printf("processingCommTask recv %d -> %d .\n", node.comm_src, node.comm_dst);
-                    }
-                    processingCommTask.state = TaskState::START;
-                    processingCommTask.node_id = node.id;
-                    processingCommTask.flow_count = 1;
-                    processingCommTasks.addTask(processingCommTask);
-
-                    // create comm entity
-                    Entity process_e = ctx.makeEntity<ProcessComm_E>();
-                    ctx.get<NpuID>(process_e).value = id.value;
-                    ctx.get<NodeID>(process_e).value = node.id;
-                    uint32_t flow_id = processingCommTasks.getTotalFlowCount();
-                    ctx.get<TaskFlows>(process_e).flows[0] = SysFlow();
-                    ctx.get<TaskFlows>(process_e).flows[0].id = flow_id;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_size = node.comm_size;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_src = node.comm_src;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_dst = node.comm_dst;
-                    ctx.get<TaskFlows>(process_e).flows[0].state = TaskState::START;
-                    ctx.get<TaskFlows>(process_e).flows[0].is_send = false;
-
-                    ctx.data().node_flows_exec_entity[id.value][node.id]= process_e;
-                    // setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t comm_size, uint32_t flow_id)
-                    uint64_t src=node.comm_src;
-                    uint64_t dst=node.comm_dst;
-                    if(MAX_MODE_16_LIMIT)
-                    {
-                        if(src>15)
-                        {
-                            src=0;
-                        }
-                        if(dst>15)
-                        {
-                            dst=15;
-                        }
-                    }
-
-                    setFlow(ctx, src, dst, node.comm_size, flow_id);
-
-                    break;
-                }
-                case NodeType::COMM_COLL_NODE:
-                {
-                    ProcessingCommTask processingCommTask = ProcessingCommTask();
-                    if (SYS_LOG && id.value == 0)
-                    {
-                        printf("processingCommTask: coll .\n");
-                    }
-                    processingCommTask.state = TaskState::START;
-                    processingCommTask.node_id = node.id;
-                    processingCommTask.flow_count = 1;
-                    processingCommTasks.addTask(processingCommTask);
-
-                    // create comm entity
-                    Entity process_e = ctx.makeEntity<ProcessComm_E>();
-                    ctx.get<NpuID>(process_e).value = id.value;
-                    ctx.get<NodeID>(process_e).value = node.id;
-                    uint32_t flow_id = processingCommTasks.getTotalFlowCount();
-                    ctx.get<TaskFlows>(process_e).flows[0] = SysFlow();
-                    ctx.get<TaskFlows>(process_e).flows[0].id = flow_id;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_size = 1000;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_src = 0;
-                    ctx.get<TaskFlows>(process_e).flows[0].comm_dst = 1;
-                    ctx.get<TaskFlows>(process_e).flows[0].state = TaskState::START;
-                    ctx.get<TaskFlows>(process_e).flows[0].is_send = true;
-
-
-                    ctx.data().node_flows_exec_entity[id.value][node.id]= process_e;
-
-
-                    // setFlow(Engine &ctx, uint64_t comm_src, uint64_t comm_dst, uint64_t comm_size, uint32_t flow_id)
-                    setFlow(ctx, 0, 1, 1000, flow_id);
-                    break;
-                }
-                default:
-                    break;
-                }
-            }
-
-            // set flag
-            hardwareResource.one_task_finish = false;
-        }
-    }
-
-    inline void processCommCheckFlow(Engine &ctx, NpuID &npu_id, NodeID &node_id, TaskFlows &taskFlows)
-    {
-        if (SYS_LOG && npu_id.value == 0)
-        {
-            printf("### sys2 ### : exec processCommCheckFlow.\n");
-        }
-
-        SysFlow flows_finish[MAX_FLOW_NUM_PER_COMM_NODE];
-        uint32_t flow_finish_count = checkFlowFinish(ctx, npu_id.value, flows_finish);
-        if (ENABLE_TEST)
-        {
-            for (int i = 0; i < 20; ++i)
-            {
-                if (taskFlows.flows[i].state == TaskState::START)
-                {
-                    taskFlows.flows[i].state = TaskState::FINISH;
-                    printf("test : flow id %d -> set flow finish.\n", taskFlows.flows[i].id);
-                }
-            }
-        }
-
-        if (flow_finish_count > 0)
-        {
-            taskFlows.updateFlows(flows_finish, flow_finish_count);
-        }
-
-        if (taskFlows.areAllTasksDone())
-        {
-            printf("node id %d -> taskFlows.areAllTasksDone\n", node_id);
-
-            ctx.get<ProcessingCommTasks>(ctx.data().chakra_nodes_entities[npu_id.value]).setFinish(node_id.value, getCurrentTime(ctx));
+// System function to handle tensor data updates during simulation
+inline void pass_config_data_and_gen_network_entt(Engine &ctx, TopoTensor &_topo_tensor, FibTensor &_fib_tensor) {
+    // static bool has_processed_initial = false;
+    // printf("has_processed_initial :%s\n", has_processed_initial ? "true" : "false");
         
-            ctx.destroyEntity(ctx.data().node_flows_exec_entity[npu_id.value][node_id.value]);
-        }
-    }
-
-    // network logic
-
-    uint16_t frame_skiptime = 0;
-    inline void checkSkipTime(Engine &ctx, NextProcessTimes &t)
-    {
-        if (SYS_LOG)
-        {
-            printf("### sys4 ### : exec checkSkipTime.\n");
-        }
-
-        frame_skiptime++;
-        if (frame_skiptime / CHECK_SKIPTIME_INTERVAL_PER_FRAME == 0)
-        {
-            frame_skiptime = 0;
-            if (!isExistedFlow(ctx))
-            {
-                uint64_t min_time = skipTime_sort_time_rMin(ctx);
-                if (min_time != 0)
-                {
-                    addSimtime(ctx, min_time - getCurrentTime(ctx));
-                    if (SYS_LOG)
-                    {
-                        printf("skip to time:%d\n", getCurrentTime(ctx));
-                    }
-                    skipTime_remove_time(ctx, min_time);
-                }
+    // if (!has_processed_initial) {
+        printf("======================================================\n");
+        printf("=== pass_config_data_and_gen_network_entt ===\n");
+        
+        // Check if tensor data is available
+        bool has_topo_data = false;
+        bool has_fib_data = false;
+        
+        // check topo tensor data
+        printf("topo_tensor.data: ");
+        for (int i = 0; i < 6; i++) {
+            printf("%d,", _topo_tensor.data[i]);
+            if (_topo_tensor.data[i] != 0) {
+                has_topo_data = true;
+                break;
             }
         }
-    }
+        printf("\n");
+        
+        // check fib tensor data
+        // printf("fib_tensor.data: ");
+        // for (int i = 0; i < 257; i++) { // right for fattree 128
+        //     printf("%d, ", _fib_tensor.data[i]);
+        // }
+        // printf("\n");
 
-    inline void removeNpuNodes(Engine &ctx,
-                               NpuID &id,
-                               ChakraNodes &chakraNodes,
-                               HardwareResource &hardwareResource,
-                               ProcessingCompTask &processingCompTask,
-                               ProcessingCommTasks &processingCommTasks)
-    {
-        if (SYS_LOG && id.value == 0)
-        {
-            printf("### sys3 ### : exec removeNpuNodes.\n");
-        }
-
-        if (SYS_LOG && id.value == 0)
-        {
-            printf("----check comp task:----\n");
-        }
-        // process comp
-        if (processingCompTask.state == TaskState::START && (processingCompTask.time_finish_ns >= getCurrentTime(ctx)))
-        {
-            // if (SYS_LOG && id.value == 0)
-            // {
-            //     printf("processingCompTask %d over.\n", processingCompTask.node_id);
-            // }
-            // release node.
-            removeNode(chakraNodes, processingCompTask.node_id);
-            if (SYS_LOG && id.value == 0)
-            {
-                printf("remode comp node : %d\n", processingCompTask.node_id);
+        for (int i = 0; i < 257; i++) { // this works for <= scale of fattree 128
+            if (_fib_tensor.data[i] != -1) {
+                has_fib_data = true;
             }
-            // reset flag.
-            hardwareResource.one_task_finish = true;
-            processingCompTask.state = TaskState::INIT;
-            hardwareResource.comp_ocupy = false;
         }
-        if (SYS_LOG && id.value == 0)
-        {
-            printf("----check comm tasks:----\n");
-        }
-        // process comm
-        if (processingCommTasks.has_task())
-        {
-            // if (SYS_LOG && id.value == 0)
-            // {
-            //     printf("node id %d -> processingCommTasks.has_task() .\n", id.value);
-            // }
-
-            int64_t t = getCurrentTime(ctx);
-            ProcessingCommTask result[MAX_FLOW_PER_NPU];
-            int task_count = processingCommTasks.dequeueTasksByTime(t, result, MAX_FLOW_PER_NPU);
-
-            if (SYS_LOG && id.value == 0 && task_count > 0)
-            {
-                printf("npu id %d -> processingCommTasks over count :%d .\n", id.value, task_count);
-            }
-
-            if (task_count > 0)
-            {
-                for (size_t i = 0; i < task_count; i++)
-                {
-                    // if (SYS_LOG && id.value == 0)
-                    // {
-                    //     printf("processingCompTask over.\n");
-                    // }
-                    // release node.
-                    removeNode(chakraNodes, processingCommTasks.tasks[i].node_id);
-                    if (SYS_LOG && id.value == 0)
-                    {
-                        printf("release comm node : %d\n", processingCommTasks.tasks[i].node_id);
+        
+        printf("Tensor data availability: Topo=%s, Fib=%s\n", 
+               has_topo_data ? "Available" : "Empty", 
+               has_fib_data ? "Available" : "Empty");
+        
+        // if there is tensor data and the entities are not created, create the entities
+        if ((has_topo_data && has_fib_data) && !ctx.data().entities_created) {
+            printf("\n=== Creating network entities based on tensor data ===\n");
+            
+            // 1. parse the tensor data to ctx.data()
+            if (has_topo_data) {
+                printf("  1. Parsing topo tensor data...\n");
+                const int32_t* topo_flat_data = _topo_tensor.data;
+                
+                // 解析标量值
+                if (topo_flat_data[0] > 0) ctx.data().num_link = static_cast<uint32_t>(topo_flat_data[0]);
+                if (topo_flat_data[1] > 0) ctx.data().num_net_npu = static_cast<uint32_t>(topo_flat_data[1]);
+                if (topo_flat_data[2] > 0) ctx.data().num_switch = static_cast<uint32_t>(topo_flat_data[2]);
+                if (topo_flat_data[3] > 0) ctx.data().sw_port_num = static_cast<uint32_t>(topo_flat_data[3]);
+                if (topo_flat_data[4] > 0) ctx.data().net_npu_port_num = static_cast<uint32_t>(topo_flat_data[4]);
+                
+                int idx = 6;
+                
+                // parse aj_link[MAX_LINKS_NUM][5]
+                for (int i = 0; i < MAX_LINKS_NUM; i++) {
+                    for (int j = 0; j < 5; j++) {
+                        ctx.data().aj_link[i][j] = static_cast<uint16_t>(topo_flat_data[idx++]);
                     }
                 }
+                
+                // parse port_num[]
+                for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+                    ctx.data().port_num[i] = static_cast<int16_t>(topo_flat_data[idx++]);
+                }
+                
+                // 解析next_hop_port[]
+                for (int i = 0; i < MAX_ALL_PORT_NUM; i++) {
+                    ctx.data().next_hop_port[i] = static_cast<int16_t>(topo_flat_data[idx++]);
+                }
+                
+                printf("   ✓ Topo data parsed: num_link=%u, num_net_npu=%u, num_switch=%u\n",
+                       ctx.data().num_link, ctx.data().num_net_npu, ctx.data().num_switch);
             }
-
-            // reset flag.
-            hardwareResource.one_task_finish = true;
+            
+            if (has_fib_data) {
+                printf("  2. Parsing fib tensor data...\n");
+                const int32_t* fib_flat_data = _fib_tensor.data;
+                
+                int idx = 0;
+                
+                // parse fib[][][]
+                for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+                    for (int j = 0; j < MAX_SW_NUM + MAX_NET_NPU_NUM; j++) {
+                        for (int k = 0; k < MAX_ONE_SW_PORT_NUM; k++) {
+                            ctx.data().fib[i][j][k] = static_cast<int16_t>(fib_flat_data[idx++]);
+                        }
+                    }
+                }
+                
+                // parse next_hop_num[][]
+                for (int i = 0; i < MAX_SW_NUM + MAX_NET_NPU_NUM; i++) {
+                    for (int j = 0; j < MAX_SW_NUM + MAX_NET_NPU_NUM; j++) {
+                        ctx.data().next_hop_num[i][j] = static_cast<int16_t>(fib_flat_data[idx++]);
+                    }
+                }
+                
+                printf("   ✓ Fib data parsed: %d entries processed\n", idx);
+            }
+            
+            // 3. Creating network entities with parsed data
+            printf("  3. Creating network entities with parsed data...\n");
+            
+            if (ctx.data().num_switch > 0) {
+                // printf("   Creating switches...\n");
+                new_generate_switch(ctx);
+                printf("   ✓ Created %u switches\n", ctx.data().num_switch);
+            }
+            
+            if ( ctx.data().num_switch > 0) {
+                // printf("   Creating ingress ports...\n");
+                new_generate_in_port(ctx);
+                printf("   ✓ Created %u ingress ports\n", ctx.data().numInPort);
+            }
+            
+            if (ctx.data().num_link > 0) {
+                // printf("   Creating egress ports and NICs...\n");
+                new_generate_egress_port_and_nic(ctx);
+                printf("   ✓ Created %u egress ports\n", ctx.data().numEPort);
+            }
+            
+            if (ctx.data().num_net_npu > 0) {
+                // printf("   Creating hosts/NPUs...\n");
+                new_generate_host(ctx);
+                printf("   ✓ Created %u NPUs\n", ctx.data().num_net_npu);
+            }
+            
+            // mark the entities as created, avoid duplicate creation
+            ctx.data().entities_created = true;
+            
+            printf("=== Network entity creation completed ===\n");
+            // printf("Final state: %u switches, %u in_ports, %u e_ports, %u net_npus\n",
+            //        ctx.data().num_switch, ctx.data().numInPort, ctx.data().numEPort, ctx.data().num_net_npu);
         }
-    }
-
-    
-
-
-
-
-
-
-
-
+        else if (!has_topo_data && !has_fib_data) {
+            printf("No tensor data available yet - entities will be created when data arrives\n");
+        }
+        else if (ctx.data().entities_created) {
+            printf("Network entities already created - skipping\n");
+        }
+        
+        // has_processed_initial = true;
+        printf("======================================================\n");
+    // }
+}
 
 
 
@@ -2738,18 +2483,13 @@ void Sim::setupTasks(TaskGraphManager &taskgraph_mgr, const Config &cfg)
 {
     TaskGraphBuilder &builder = taskgraph_mgr.init(TaskGraphID::Step);
 
+    // auto comm_sys=builder.addToGraph<ParallelForNode<Engine, tick, CurStep,Results,Results2,SimulationTime,MadronaEventsQueue,MadronaEvents,MadronaEventsResult,ProcessParams>>({});
 
-    // ------------------sys--------------------------------------------------------------
-
-    // auto sys_init = builder.addToGraph<ParallelForNode<Engine, init,
-    //                                                     ChakraNodesData>>({});
-    // auto sys_process_node = builder.addToGraph<ParallelForNode<Engine, processNpuNodes,
-    //                                                             NpuID, ChakraNodes, HardwareResource, ProcessingCompTask, ProcessingCommTasks>>({sys_init});
-
-    // --------------------------------------------------------------------------------
+    // in the first step(frame 0), generate the network entities based on the tensor data
+    auto pass_config_data_and_gen_network_entt_sys = builder.addToGraph<ParallelForNode<Engine, pass_config_data_and_gen_network_entt, TopoTensor, FibTensor>>({});
 
     auto get_flow_sys = builder.addToGraph<ParallelForNode<Engine, comm_set_flow, NET_NPU_ID, NewFlowQueue, \
-                                             SimTime, SimTimePerUpdate>>({}); 
+                                             SimTime, SimTimePerUpdate>>({pass_config_data_and_gen_network_entt_sys});
 
     auto setup_flow_sys = builder.addToGraph<ParallelForNode<Engine, setup_flow, NET_NPU_ID, NewFlowQueue, \
     SimTime, SimTimePerUpdate>>({get_flow_sys}); 
@@ -2770,13 +2510,14 @@ void Sim::setupTasks(TaskGraphManager &taskgraph_mgr, const Config &cfg)
                                                             PktBuf, AckPktBuf,
                                                             NICRate, HSLinkDelay, SimTime, SimTimePerUpdate>>({flow_receive_sys});
 
+
     auto check_flow_state_sys = builder.addToGraph<ParallelForNode<Engine, check_flow_state, NET_NPU_ID, CompletedFlowQueue, \
                                                    SimTime, SimTimePerUpdate>>({flow_send_sys}); 
 
-    auto nic_forward_sys = builder.addToGraph<ParallelForNode<Engine, nic_forward, \
-                                              NIC_ID, NICRate, SimTime, \
-                                              SimTimePerUpdate, BidPktBuf>>({check_flow_state_sys});
 
+    auto nic_forward_sys = builder.addToGraph<ParallelForNode<Engine, nic_forward, NIC_ID, \
+                                               NICRate, SimTime, SimTimePerUpdate, \
+                                               BidPktBuf>>({check_flow_state_sys});
 
     auto nic_transmit_sys = builder.addToGraph<ParallelForNode<Engine, nic_transmit, NIC_ID, \
                                                NICRate, HSLinkDelay, \
@@ -2791,7 +2532,7 @@ void Sim::setupTasks(TaskGraphManager &taskgraph_mgr, const Config &cfg)
 
     auto forward_sys = builder.addToGraph<ParallelForNode<Engine, _forward, SchedTrajType, \
                                           LocalPortID, GlobalPortID, PktQueue, SwitchID, \
-                                          SimTime, SimTimePerUpdate>>({set_forward_plan_sys});
+                                          SimTime, SimTimePerUpdate, Seed>>({set_forward_plan_sys});
 
     auto remove_pkts_sys = builder.addToGraph<ParallelForNode<Engine, remove_pkts, \
                                               LocalPortID, GlobalPortID, PktBuf, ForwardPlan, \
@@ -2799,19 +2540,7 @@ void Sim::setupTasks(TaskGraphManager &taskgraph_mgr, const Config &cfg)
 
     auto transmit_sys = builder.addToGraph<ParallelForNode<Engine, transmit, SchedTrajType, \
     PortType, LocalPortID, GlobalPortID, SwitchID, NextHop, NextHopType, PktQueue, TXHistory, \
-    SSLinkDelay, LinkRate, SimTime, SimTimePerUpdate, Seed>>({remove_pkts_sys});       
-
-
-    // ------------------sys--------------------------------------------------------------
-    // auto sys_process_comm = builder.addToGraph<ParallelForNode<Engine, processCommCheckFlow,
-    //                                                             NpuID, NodeID, TaskFlows>>({transmit_sys});
-    
-    // auto sys_remove_node=builder.addToGraph<ParallelForNode<Engine, removeNpuNodes,
-    // NpuID, ChakraNodes, HardwareResource, ProcessingCompTask, ProcessingCommTasks>>({sys_process_comm});
-    
-    // auto sys_skip_time = builder.addToGraph<ParallelForNode<Engine, checkSkipTime, NextProcessTimes>>({sys_remove_node});
-
-    // -----------------------------------------------------------------------------------
+    SSLinkDelay, LinkRate, SimTime, SimTimePerUpdate, Seed>>({remove_pkts_sys});                    
     
 }
 
@@ -2826,18 +2555,21 @@ Sim::Sim(Engine &ctx,
     printf("\n***********enter Sim construction function!\n");
     printf("\ncfg.kAray: %d\n", cfg.kAray);
     printf("\ncfg.ccMethod: %d\n", cfg.ccMethod);
-    printf("\nLinks[0]: %d\n", cfg.Links[0][0]);
-    printf("\nLinks[0]: %d\n", cfg.Links[1][0]); 
-    printf("\ncfg.topo:link_num: %d\n", cfg.topo.link_num);
-    printf("\ncfg.topo:net_npu_num: %d\n", cfg.topo.net_npu_num);
-    printf("\ncfg.topo:aj_link[0][0]: %d\n", cfg.topo.aj_link[0][0]);
 
     // constexpr CountT max_total_entities = consts::numAgents +
     //     consts::numRooms * (consts::maxEntitiesPerRoom + 3) +
     //     4; // side walls + floor
-    constexpr CountT max_total_entities = 1 +
-        consts::numRooms * (consts::maxEntitiesPerRoom + 3) +
-        4; // side walls + floor
+    
+    // Original limit was too small (32 entities) for network topology
+    // Network topology requires:
+    // - Switches: MAX_SW_NUM (320)
+    // - NPUs: MAX_NET_NPU_NUM (1024) 
+    // - NICs: MAX_NET_NPU_NUM*2 (2048)
+    // - Ingress Ports: MAX_ALL_PORT_NUM (12288)
+    // - Egress Ports: MAX_ALL_PORT_NUM+100000 (112288)
+    // - Agent: 1
+    // Total: ~125,000+ entities
+    constexpr CountT max_total_entities = 150000; // Increased to accommodate network topology
 
     phys::PhysicsSystem::init(ctx, cfg.rigidBodyObjMgr,
         consts::deltaT, consts::numPhysicsSubsteps, -9.8f * math::up,
@@ -2854,92 +2586,58 @@ Sim::Sim(Engine &ctx,
 
     curWorldEpisode = 0;
 
-    // // Creates agents, walls, etc.
-    // createPersistentEntities(ctx);
-    // // Generate initial world state
-    // initWorld(ctx);
 
 
-// copied from level_gen.cpp by gui fei
-    // Entity agent = ctx.makeRenderableEntity<Agent>();
+    // Create Agent entity early to enable tensor access from Python
+    // This must be done before Python tries to access tensors
+    create_agent_for_tensor_access(ctx);
 
-    // // Create a render view for the agent
-    // if (ctx.data().enableRender) {
-    //     render::RenderingSystem::attachEntityToView(ctx,
-    //             agent,
-    //             100.f, 0.001f,
-    //             1.5f * math::up);
-    // }
+    // Initialize ctx.data to default empty state
+    // All data will come from tensor transfers only
+    ctx.data().num_link = 0;
+    ctx.data().num_net_npu = 0;
+    ctx.data().num_switch = 0;
+    ctx.data().sw_port_num = 0;
+    ctx.data().net_npu_port_num = 0;
+    
+    ctx.data().entities_created = false;
 
-    // ctx.get<Scale>(agent) = Diag3x3 { 1, 1, 1 };
-    // ctx.get<ObjectID>(agent) = ObjectID { (int32_t)SimObject::Agent };
-    // ctx.get<ResponseType>(agent) = ResponseType::Dynamic;
-    // ctx.get<GrabState>(agent).constraintEntity = Entity::none();
-    // ctx.get<EntityType>(agent) = EntityType::Agent;
+    // printf("ctx.data initialized to empty state - data will come from tensors only\n");
+    // printf("Python must transfer tensor data before simulation can proceed\n");
 
-    // ctx.get<CurStep>(agent).step = 0;
+    // printf("\nctx.data.num_link: %d\n", ctx.data().num_link);
+    // printf("\nctx.data.num_switch: %d\n", ctx.data().num_switch);
+    // printf("\nctx.data.num_net_npu: %d\n", ctx.data().num_net_npu);
+    // printf("\nctx.data.aj_link[0][0]: %d\n", ctx.data().aj_link[0][0]);
+    // printf("\nctx.data.fib[0][1][0] : %d\n", ctx.data().fib[0][1][0]);
 
-//
+    // All data initialization now happens via tensor transfer only
+    // printf("Configuration loaded - data will be provided via tensor transfer\n");
 
-
-
-//
+    //
     //***************************************************
     // for the router forwarding function, of GPU_acclerated DES
     numInPort = 0;
     numEPort = 0;
-
-    // numSender = 0;
-    // numReceiver = 0;
-    numSwitch = 0;  
-
-    // num_snd_flow = 0;
-    // num_recv_flow = 0;
-
     num_nic = 0;
-    num_net_npu = 0;
-    
-    for (int i = 0; i < K_ARY*K_ARY*K_ARY/4; i++) {
+
+    for (int i = 0; i < MAX_NET_NPU_NUM; i++) {
         flow_cnt[i] = 0;
     }
     
-    printf("Gen entity as following: \n");
-    generate_switch(ctx, cfg.kAray);
-    generate_in_port(ctx, cfg.kAray);
-    generate_e_port(ctx, cfg.kAray);
-    generate_host(ctx, cfg.kAray);
+    // printf("Gen entity as following: \n");
+    // new_generate_switch(ctx);
+    // new_generate_in_port(ctx);
+    // new_generate_egress_port_and_nic(ctx);
+    // new_generate_host(ctx);
+    // printf("Total %d switches, %d in_ports, %d e_ports, %d nics, %d net_npus\n", \
+    //        ctx.data().num_switch, ctx.data().numInPort, ctx.data().numEPort, \
+    //        ctx.data().num_nic, ctx.data().num_net_npu);
 
-    printf("Total %d switches, %d in_ports, %d e_ports, %d nics, %d net_npus\n", \
-           ctx.data().numSwitch, ctx.data().numInPort, ctx.data().numEPort, \
-           ctx.data().num_nic, ctx.data().num_net_npu);
-    // generate_fib_table(ctx, K_ARY);
+    // Note: tensor data processing is handled by the check_tensor_updates system
+    // during simulation steps, not during construction to avoid entity conflicts
     //***************************************************
 //
-
-    // init
-    Entity agent = ctx.makeEntity<Agent>();
-    ctx.data().init_entity = agent;
-
-    // sim time entity
-    // Entity sp = ctx.makeEntity<SimTimeProcessor>();
-    // ctx.get<SimTime>(sp).time = 0;
-    // ctx.data().timer_entity = sp;
-
-    // next process time entity
-    Entity nextProcessTimeE = ctx.makeEntity<NextProcessTimeE>();
-    for (size_t i = 0; i < MAX_CHAKRA_NODES; i++)
-    {
-        ctx.get<NextProcessTimes>(nextProcessTimeE).times_abs[i] = 0;
-    }
-    ctx.data().next_process_time_entity = nextProcessTimeE;
-
-    // Sys_config
-    Entity sc = ctx.makeEntity<SysConfig>();
-    ctx.get<CommModel>(sc).all_reduce_implementation = CommImplementationType::Ring;
-    ctx.get<CommModel>(sc).all_gather_implementation = CommImplementationType::Ring;
-    ctx.get<CommModel>(sc).reduce_scatter_implementation = CommImplementationType::Ring;
-    ctx.get<CommModel>(sc).all_to_all_implementation = CommImplementationType::Ring;
-    ctx.data().sys_config_entity = sc;
 
 }
 
@@ -2948,5 +2646,7 @@ Sim::Sim(Engine &ctx,
 // application's world data type (Sim) and config and initialization types.
 // On the CPU it is a no-op.
 MADRONA_BUILD_MWGPU_ENTRY(Engine, Sim, Sim::Config, Sim::WorldInit);
+
+
 
 }

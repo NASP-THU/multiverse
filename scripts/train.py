@@ -2,7 +2,6 @@ import torch
 import madrona_escape_room
 import time
 import numpy as np
-import os
 
 from madrona_escape_room_learn import (
     train, profile, TrainConfig, PPOConfig, SimInterface,
@@ -16,8 +15,7 @@ from pathlib import Path
 import warnings
 # warnings.filterwarnings("error")
 
-from parse_chakra import Node,Attribute,BoolList,Parse
-from node_conversion import folder_to_int_array,test_conversion
+from gen_fib_flex_topo import parse_topo, build_global_routing_table_with_array
 
 torch.manual_seed(0)
 
@@ -79,11 +77,11 @@ class LearningCallback:
 
 arg_parser = argparse.ArgumentParser()
 arg_parser.add_argument('--gpu-id', type=int, default=1)
-arg_parser.add_argument('--ckpt-dir', type=str, default="build/ckpts")
+arg_parser.add_argument('--ckpt-dir', type=str, required=True)
 arg_parser.add_argument('--restore', type=int)
 
-arg_parser.add_argument('--num-worlds', type=int, default=1)
-arg_parser.add_argument('--num-updates', type=int, default=5)
+arg_parser.add_argument('--num-worlds', type=int, required=True)
+arg_parser.add_argument('--num-updates', type=int, required=True)
 arg_parser.add_argument('--steps-per-update', type=int, default=40)
 arg_parser.add_argument('--num-bptt-chunks', type=int, default=8)
 
@@ -102,9 +100,9 @@ arg_parser.add_argument('--profile-report', action='store_true')
 
 
 # arg_parser.add_argument('--enable_gpu_sim', type=str, required=True, help='Enable GPU simulation (e.g., "cpu" or "gpu")')
-arg_parser.add_argument('--gpu_id', type=int, default=3, help='GPU ID')
-arg_parser.add_argument('--fattree_K', type=int, default=4, help='Fattree K value')
-arg_parser.add_argument('--cc_method', type=int, default=1, help='Congestion control method')
+arg_parser.add_argument('--gpu_id', type=int, required=True, help='GPU ID')
+arg_parser.add_argument('--fattree_K', type=int, required=True, help='Fattree K value')
+arg_parser.add_argument('--cc_method', type=int, required=True, help='Congestion control method')
 
 
 
@@ -118,25 +116,60 @@ print(f"Fattree K: {args.fattree_K}")
 print(f"CC Method: {args.cc_method}")
 
 
-# class AJLink:
-#     def __init__(self):
-#         # 使用NumPy数组来定义一个二维数组，大小为 (100000, 5)
-#         self.aj_link = np.zeros((100000, 5), dtype=np.uint32)
-#         self.link_num = 0
-#         self.npu_num = 0
 
 
-# 示例用法
-topo = madrona_escape_room.Topo()  # Removed madEscape namespace
-topo.link_num = 10
-topo.net_npu_num = 2
-topo.aj_link[0] = [1, 2, 1, 2, 3]
+# Parse topology and initialize Topo struct
+topology_file = "./fattree_4_16g_2gps_100Gbps_H100_no_scale_up"  # Replace with the actual topology file path
+# topology_file = "./Spectrum-X_128g_8gps_100Gbps_H100_no_scale_up_test"  # Replace with the actual topology file path
+aj_link, link_num, net_npu_num, sw_num, port_num, switch_next_hop_port, net_npu_next_hop_port, sw_port_num, net_npu_port_num, graph, port_mapping, _ = parse_topo(topology_file)
+
+print("sw_num: ", sw_num)
+
+topo = madrona_escape_room.Topo()
+topo.link_num = link_num
+topo.net_npu_num = net_npu_num
+topo.sw_num = sw_num
+topo.sw_port_num = sw_port_num
+topo.net_npu_port_num = net_npu_port_num
+
+# Assign aj_link
+topo.aj_link[:len(aj_link)] = np.array(aj_link, dtype=np.int16)
+# Assign port_num
+topo.port_num[:len(port_num)] = np.array(port_num, dtype=np.int16)
+# Combine switch_next_hop_port and net_npu_next_hop_port into next_hop_port
+
+# combined_next_hop_port的长度等于next_hop_port的真实长度
+combined_next_hop_port = np.array(net_npu_next_hop_port[0:net_npu_port_num]+switch_next_hop_port[net_npu_port_num:net_npu_port_num+sw_port_num], dtype=np.int16)
+topo.next_hop_port[:len(combined_next_hop_port)] = combined_next_hop_port
+print("net_npu_port_num: ", net_npu_port_num, "sw_port_num: ", sw_port_num)
+print("next_hop_port\n", len(topo.next_hop_port), topo.next_hop_port)
+# Build global routing table and assign to Fib
+_, global_routing_table_array, next_hop_num = build_global_routing_table_with_array(graph, port_mapping)
+
+fib = madrona_escape_room.Fib()
+
+# Adjust the shape of global_routing_table_array to match fib.fib
+adjusted_routing_table = np.zeros((fib.fib.shape[0], fib.fib.shape[1], fib.fib.shape[2]), dtype=np.int16)
+for i in range(min(len(global_routing_table_array), fib.fib.shape[0])):
+    for j in range(min(len(global_routing_table_array[i]), fib.fib.shape[1])):
+        adjusted_routing_table[i, j, :len(global_routing_table_array[i][j])] = global_routing_table_array[i][j]
+
+fib.fib[:len(adjusted_routing_table)] = adjusted_routing_table
+
+next_hop_num_np = np.array(next_hop_num, dtype=np.int16)
+fib.next_hop_num[:next_hop_num_np.shape[0], :next_hop_num_np.shape[1]] = next_hop_num_np
+print("fib.next_hop_num\n", len(fib.next_hop_num), fib.next_hop_num[1])
+
+# print("fib.fib shape:", fib.fib.shape, "dtype:", fib.fib.dtype)
+# print("fib.next_hop_num shape:", fib.next_hop_num.shape, "dtype:", fib.next_hop_num.dtype)
 
 
+# print("**fib**\n")
+# print(fib.fib[17])
 
 links = np.zeros((2, 100), dtype=np.uint32)  # Create a 2D NumPy array for Links
-links[0][0] = 5  # Example initialization
-links[1][0] = 10  # Example initialization
+# links[0][0] = 5  # Example initialization
+# links[1][0] = 10  # Example initialization
 
 sim = madrona_escape_room.SimManager(
     exec_mode = madrona_escape_room.madrona.ExecMode.CUDA if args.gpu_sim else madrona_escape_room.madrona.ExecMode.CPU,
@@ -147,111 +180,51 @@ sim = madrona_escape_room.SimManager(
     k_aray = args.fattree_K,
     cc_method = args.cc_method,
     links = links,
-    topo = topo
+    topo = topo,
+    fib = fib
 )
 
-ckpt_dir = Path(args.ckpt_dir)
+# ckpt_dir = Path(args.ckpt_dir)
 
-learning_cb = LearningCallback(ckpt_dir, args.profile_report)
+# learning_cb = LearningCallback(ckpt_dir, args.profile_report)
 
-if torch.cuda.is_available():
-    dev = torch.device(f'cuda:{args.gpu_id}')
-else:
-    dev = torch.device('cpu')
+# if torch.cuda.is_available():
+#     dev = torch.device(f'cuda:{args.gpu_id}')
+# else:
+#     dev = torch.device('cpu')
 
-ckpt_dir.mkdir(exist_ok=True, parents=True)
+# ckpt_dir.mkdir(exist_ok=True, parents=True)
 
-obs, num_obs_features = setup_obs(sim)
-policy = make_policy(num_obs_features, args.num_channels, args.separate_value)
+# obs, num_obs_features = setup_obs(sim)
+# policy = make_policy(num_obs_features, args.num_channels, args.separate_value)
 
-actions = sim.action_tensor().to_torch()
-dones = sim.done_tensor().to_torch()
-rewards = sim.reward_tensor().to_torch()
+# actions = sim.action_tensor().to_torch()
+# dones = sim.done_tensor().to_torch()
+# rewards = sim.reward_tensor().to_torch()
 
-# Flatten N, A, ... tensors to N * A, ...
-actions = actions.view(-1, *actions.shape[2:])
-dones  = dones.view(-1, *dones.shape[2:])
-rewards = rewards.view(-1, *rewards.shape[2:])
+# # Flatten N, A, ... tensors to N * A, ...
+# actions = actions.view(-1, *actions.shape[2:])
+# dones  = dones.view(-1, *dones.shape[2:])
+# rewards = rewards.view(-1, *rewards.shape[2:])
 
-if args.restore:
-    restore_ckpt = ckpt_dir / f"{args.restore}.pth"
-else:
-    restore_ckpt = None
+# if args.restore:
+#     restore_ckpt = ckpt_dir / f"{args.restore}.pth"
+# else:
+#     restore_ckpt = None
 
-
-# --------------sys-----------------------------------------
-# params
-chakra_nodes_data_length=10000000 
-chakra_nodes_num=1
-# 
-
-def empty_tensor(rows= chakra_nodes_num,max_len=chakra_nodes_data_length):
-    tensor = torch.zeros((rows,max_len), dtype=torch.int32)
-    return tensor
-
-def ints_to_tensor(int_array,num_world=1,rows= chakra_nodes_num,max_len=chakra_nodes_data_length):
-     i=0
-     tensor = torch.zeros((num_world,rows,max_len), dtype=torch.int32)
-     for array in int_array:
-        tensor[0,i,:len(array)] = torch.tensor(array, dtype=torch.int32)
-        i+=1
-     return tensor
-def tensor_to_ints(tensor):
-     encoded = tensor.cpu().numpy().tolist() 
-     return encoded
-
-current_dir = os.path.dirname(os.path.abspath(__file__))
-folder_path = os.path.join(current_dir, "input")
-data=folder_to_int_array(folder_path)
-data_tensor=ints_to_tensor(data)
-int_tensor=tensor_to_ints(sim.chakra_nodes_data_tensor().to_torch())
-sim.chakra_nodes_data_tensor().to_torch().copy_(data_tensor)
-
-
-# ----------------------------------------------------------
 
 
 
 FRAME_LEN = 1000
 start = time.time()
-# for i in range(args.num_updates):
-for i in range(100):
+for i in range(args.num_updates):
+    # if i>=999:
     print("\n------------------------------------------------------------", i+1, "-th frame", (i+1)*FRAME_LEN, "--", (i+2)*FRAME_LEN, "------------------------------------------------------------\n")
     sim.step()
+    end = time.time()
+    print("time: ", (end - start))
+    print("\n------------------------------------------------------------", i+1, "-th frame", (i+1)*FRAME_LEN, "--", (i+2)*FRAME_LEN, "time: ", (end - start), "------------------------------------------------------------\n")
 
-end = time.time()
+# end = time.time()
 
-print("time: ", (end - start))
-
-# train(
-#     dev,
-#     SimInterface(
-#             step = lambda: sim.step(),
-#             obs = obs,
-#             actions = actions,
-#             dones = dones,
-#             rewards = rewards,
-#     ),
-#     TrainConfig(
-#         num_updates = args.num_updates,
-#         steps_per_update = args.steps_per_update,
-#         num_bptt_chunks = args.num_bptt_chunks,
-#         lr = args.lr,
-#         gamma = args.gamma,
-#         gae_lambda = 0.95,
-#         ppo = PPOConfig(
-#             num_mini_batches=1,
-#             clip_coef=0.2,
-#             value_loss_coef=args.value_loss_coef,
-#             entropy_coef=args.entropy_loss_coef,
-#             max_grad_norm=0.5,
-#             num_epochs=2,
-#             clip_value_loss=args.clip_value_loss,
-#         ),
-#         value_normalizer_decay = 0.999,
-#         mixed_precision = args.fp16,
-#     ),
-#     policy,
-#     learning_cb,
-#     restore_ckpt
-# )
+# print("time: ", (end - start))

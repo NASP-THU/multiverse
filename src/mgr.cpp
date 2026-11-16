@@ -392,13 +392,8 @@ Manager::Impl * Manager::Impl::init(
     sim_cfg.autoReset = mgr_cfg.autoReset;
     sim_cfg.initRandKey = rand::initKey(mgr_cfg.randSeed);
 
-// //
     sim_cfg.kAray = mgr_cfg.kAray;
     sim_cfg.ccMethod = mgr_cfg.ccMethod;
-    sim_cfg.Links = mgr_cfg.Links;
-    
-    sim_cfg.topo = mgr_cfg.topo;
-// //
 
     switch (mgr_cfg.execMode) {
     case ExecMode::CUDA: {
@@ -431,6 +426,7 @@ Manager::Impl * Manager::Impl::init(
             .numWorldInitBytes = sizeof(Sim::WorldInit),
             .userConfigPtr = (void *)&sim_cfg,
             .numUserConfigBytes = sizeof(Sim::Config),
+            // .numUserConfigBytes = (uint64_t)sizeof(Sim::Config),
             .numWorldDataBytes = sizeof(Sim),
             .worldDataAlignment = alignof(Sim),
             .numWorlds = mgr_cfg.numWorlds,
@@ -774,12 +770,17 @@ Tensor Manager::processParamsTensor() const
         {impl_->cfg.numWorlds, 1000});
 }
 
-Tensor Manager::chakraNodesDataTensor() const
+Tensor Manager::topoTensor() const
 {
-    return impl_->exportTensor(ExportID::ChakraNodesData, TensorElementType::Int32,
-        {impl_->cfg.numWorlds, 1,10000000 });
+    return impl_->exportTensor(ExportID::TopoTensor, TensorElementType::Int32,
+        {impl_->cfg.numWorlds, TOPO_TENSOR_SIZE});
 }
 
+Tensor Manager::fibTensor() const
+{
+    return impl_->exportTensor(ExportID::FibTensor, TensorElementType::Int32,
+        {impl_->cfg.numWorlds, FIB_TENSOR_SIZE});
+}
 // //
 
 }

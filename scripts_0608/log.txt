@@ -1,0 +1,586 @@
+
+***********enter Sim construction function!
+
+cfg.kAray: 4
+
+cfg.ccMethod: 1
+
+Links[0]: 5
+
+Links[0]: 10
+
+cfg.topo:link_num: 96
+
+cfg.topo:net_npu_num: 16
+
+cfg.topo:aj_link[0][0]: 0
+
+cfg.fib.fib[0][1][0] : 1
+
+ctx.data.num_link: 96
+
+ctx.data.num_switch: 20
+
+ctx.data.num_net_npu: 16
+
+ctx.data.aj_link[0][0]: 0
+
+ctx.data.fib[0][1][0] : 1
+Gen entity as following: 
+*******generate_switch*******
+Total 20 switches
+*******Generate in ports*******
+Total 20 switches, 80 in_ports, 80 e_ports, 16 net_npus
+Total 20 switches, 80 in_ports, 80 e_ports, 16 nics, 16 net_npus
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+Exiting create_flow for net_npu_id: 0
+set flow id 1: 2->3 5000, 
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 0, end_time: 1000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 0, end_time: 1000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 0, end_time: 1000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 0, end_time: 1000
+cc target rate: 100.000, cc cur rate: 100.000
+pkt type: DATA
+flow send by sender: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 119, dequeue_time: 119
+pkt type: DATA
+flow send by sender: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 239, dequeue_time: 239
+pkt type: DATA
+flow send by sender: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 359, dequeue_time: 359
+pkt type: DATA
+flow send by sender: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 411, dequeue_time: 411
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 0, end_time: 1000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 0, end_time: 1000
+pkt type: DATA
+nic_forward(data pkt): :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 119, dequeue_time: 119
+pkt type: DATA
+nic_forward(data pkt): :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 239, dequeue_time: 239
+pkt type: DATA
+nic_forward(data pkt): :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 359, dequeue_time: 359
+pkt type: DATA
+nic_forward(data pkt): :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 411, dequeue_time: 411
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 0, end_time: 1000
+pkt type: DATA
+nic_transmit: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 1149, dequeue_time: 149
+pkt type: DATA
+nic_transmit: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 1269, dequeue_time: 269
+pkt type: DATA
+nic_transmit: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 1389, dequeue_time: 389
+pkt type: DATA
+nic_transmit: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 1424, dequeue_time: 424
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 0, end_time: 1000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 0, end_time: 1000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 0, end_time: 1000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 1000, end_time: 2000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 1000, end_time: 2000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 1000, end_time: 2000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 1000, end_time: 2000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 1000, end_time: 2000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 1000, end_time: 2000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 1000, end_time: 2000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 1000, end_time: 2000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 1000, end_time: 2000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+path: length: 2: (1, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 1149, dequeue_time: 149
+path: length: 2: (1, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 1269, dequeue_time: 269
+path: length: 2: (1, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 1389, dequeue_time: 389
+path: length: 2: (1, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 1424, dequeue_time: 424
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 1000, end_time: 2000
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 2269, dequeue_time: 1269
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 2389, dequeue_time: 1389
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 2509, dequeue_time: 1509
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 2561, dequeue_time: 1561
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 2000, end_time: 3000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 2000, end_time: 3000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 2000, end_time: 3000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 2000, end_time: 3000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 2000, end_time: 3000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 2000, end_time: 3000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 2000, end_time: 3000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 2000, end_time: 3000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 2000, end_time: 3000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+path: length: 6: (1, 0), (1, 3), (9, 1), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 2269, dequeue_time: 1269
+path: length: 6: (1, 0), (1, 3), (9, 1), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 2389, dequeue_time: 1389
+path: length: 6: (1, 0), (1, 3), (9, 1), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 2509, dequeue_time: 1509
+path: length: 6: (1, 0), (1, 3), (9, 1), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 2561, dequeue_time: 1561
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 2000, end_time: 3000
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 3389, dequeue_time: 2389
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 3509, dequeue_time: 2509
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 3629, dequeue_time: 2629
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 3681, dequeue_time: 2681
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 3000, end_time: 4000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 3000, end_time: 4000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 3000, end_time: 4000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 3000, end_time: 4000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 3000, end_time: 4000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 3000, end_time: 4000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 3000, end_time: 4000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 3000, end_time: 4000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 3000, end_time: 4000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+path: length: 10: (1, 0), (1, 3), (9, 1), (9, 3), (19, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 3389, dequeue_time: 2389
+path: length: 10: (1, 0), (1, 3), (9, 1), (9, 3), (19, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 3509, dequeue_time: 2509
+path: length: 10: (1, 0), (1, 3), (9, 1), (9, 3), (19, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 3629, dequeue_time: 2629
+path: length: 10: (1, 0), (1, 3), (9, 1), (9, 3), (19, 0), 
+pkt type: DATA
+forward: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 3681, dequeue_time: 2681
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 3000, end_time: 4000
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 0, enqueue_time: 4509, dequeue_time: 3509
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 1460, enqueue_time: 4629, dequeue_time: 3629
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 1460, sq_num: 2920, enqueue_time: 4749, dequeue_time: 3749
+pkt type: DATA
+switch transmit to switch: :: src: 2, dst: 3, ecn: 0, payload_len: 620, sq_num: 4380, enqueue_time: 4801, dequeue_time: 3801
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 4000, end_time: 5000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 4000, end_time: 5000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 4000, end_time: 5000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 4000, end_time: 5000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 4000, end_time: 5000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 4000, end_time: 5000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 4000, end_time: 5000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 4000, end_time: 5000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 4000, end_time: 5000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 4000, end_time: 5000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 5000, end_time: 6000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 5000, end_time: 6000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 5000, end_time: 6000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 5000, end_time: 6000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 5000, end_time: 6000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 5000, end_time: 6000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 5000, end_time: 6000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 5000, end_time: 6000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 5000, end_time: 6000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 5000, end_time: 6000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 6000, end_time: 7000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 6000, end_time: 7000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 6000, end_time: 7000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 6000, end_time: 7000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 6000, end_time: 7000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 6000, end_time: 7000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 6000, end_time: 7000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 6000, end_time: 7000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 6000, end_time: 7000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 6000, end_time: 7000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 7000, end_time: 8000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 7000, end_time: 8000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 7000, end_time: 8000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 7000, end_time: 8000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 7000, end_time: 8000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 7000, end_time: 8000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 7000, end_time: 8000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 7000, end_time: 8000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 7000, end_time: 8000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 7000, end_time: 8000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 8000, end_time: 9000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 8000, end_time: 9000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 8000, end_time: 9000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 8000, end_time: 9000
+cc target rate: 100.000,gpu id id: 3
+Fattree K: 4
+CC Method: 1
+sw_num:  20
+500 [ 0  1  4  5  8  9 12 13 16 17 20 21 24 25 28 29  0  1 32 36  2  3 33 37
+  4  5 40 44  6  7 41 45  8  9 48 52 10 11 49 53 12 13 56 60 14 15 57 61
+  2  6 64 68  3  7 72 76 10 14 65 69 11 15 73 77 18 22 66 70 19 23 74 78
+ 26 30 67 71 27 31 75 79 34 42 50 58 35 43 51 59 38 46 54 62 39 47 55 63
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0  0]
+**fib**
+
+<madrona_escape_room.Fib object at 0x26c1f840>
+
+------------------------------------------------------------ 1 -th frame 1000 -- 2000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 2 -th frame 2000 -- 3000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 3 -th frame 3000 -- 4000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 4 -th frame 4000 -- 5000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 5 -th frame 5000 -- 6000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 6 -th frame 6000 -- 7000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 7 -th frame 7000 -- 8000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 8 -th frame 8000 -- 9000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 9 -th frame 9000 -- 10000 ------------------------------------------------------------
+
+
+------------------------------------------------------------ 10 -th frame 10000 -- 11000 ------------------------------------------------------------
+
+time:  0.03782248497009277
+ cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 8000, end_time: 9000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 8000, end_time: 9000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 8000, end_time: 9000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 8000, end_time: 9000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 8000, end_time: 9000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 8000, end_time: 9000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 9000, end_time: 10000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 9000, end_time: 10000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 9000, end_time: 10000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 9000, end_time: 10000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 9000, end_time: 10000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 9000, end_time: 10000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 9000, end_time: 10000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 9000, end_time: 10000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 9000, end_time: 10000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 9000, end_time: 10000
+*********Enter into comm_set_flow, net_npu_id: 0
+comm_set_flow: _new_flow_queue, before enqueue, len = 0
+
+*******Enter into nic_receive*********
+start _sim_time.sim_time: 10000, end_time: 11000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 10000, end_time: 11000
+
+*******Enter into flow receive*********
+start _sim_time.sim_time: 10000, end_time: 11000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 10000, end_time: 11000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into flow send*********
+src: 2, dst: 3, flow_id: 1, start _sim_time.sim_time: 10000, end_time: 11000
+cc target rate: 100.000, cc cur rate: 100.000
+
+*******Enter into nic_forward*********
+start _sim_time.sim_time: 10000, end_time: 11000
+
+*******Enter into nic_transmit*********
+start _sim_time.sim_time: 10000, end_time: 11000
+
+
+*******Enter into set_forward_plan sys*********
+start _sim_time.sim_time: 10000, end_time: 11000
+0000000000000000000000000000000000000000000000000000000000000000
+
+*******Enter into _forward sys*********
+start _sim_time.sim_time: 10000, end_time: 11000
+_switch_id.switch_id: 0, start_port_id: 0, stop_port_id: 3
+
+*******Enter into transmit sys*********
+start _sim_time.sim_time: 10000, end_time: 11000

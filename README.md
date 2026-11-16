@@ -1,228 +1,158 @@
-# Multiverse 2.0
+# Multiverse development
 
-Multiverse 2.0​​ is a next-generation, GPU-accelerated AI/LLM training simulator designed for high-performance and high-fidelity large-scale AI/LLM system research. In this version, both the system and network layers are fully GPU-accelerated while retaining CPU-only execution support for compatibility and testing. All components have been re-architected using Data-Oriented Design (DOD) principles to maximize simulation efficiency.
+GPU Accelerated LLM tranining simulator for LLM  training
 
+# How to use this repository
 
-
-
->  **Note:** In Multiverse 2.0, the system and network layers run within the same process, eliminating the need for shared memory communication between them.
-
-  
+This repository is extended from madrona_escape_room .
+So, you should install madrona_escape_room (https://github.com/shacklettbp/madrona_escape_room) at the beggining. And then you replace some original codes with our developed and modified codes. 
 
 
-## What's New in 2.0
+# In the first phase: install madrona_escape_room
+## At the beggining, make sure that NVIDIA driver 560.35.05(both LM1 and LM2 already support), cuda == 12.5(recommended 12.5),  cmake>=3.24(reommended 3.27), torch, in your enviroment:
 
-  
+### 1 check the version of cuda using "$nvcc --version", if cuda is not >= 12.5, check whether there is cuda 12.5 using "ls /usr/local/cuda*"
 
--  **Full GPU Acceleration**: Both the system simulator and network simulator leverage GPUs for significant speedup. CPU-only execution remains available for compatibility and testing.
+If cuda 12.5 exists, specify the version of cuda in ~/.bashrc：
+```bash 
+export PATH=/usr/local/cuda-12.5/bin${PATH:+:${PATH}}
+export LD_LIBRARY_PATH=/usr/local/cuda-12.5/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+```
+else install cuda 12.5. (Both server LM1 and LM2 support cuda 12.5)
 
--  **Unified Data-Oriented Design**: The entire simulator is redesigned with DOD principles to optimize data locality and throughput.
-
--  **Simplified Architecture**: The system and network layers now operate in the same process, removing the need for shared memory communication.
-
--  **Flexible Input Pipeline**: Simulation scenarios are defined using Chakra files, further optimized with AIOB for efficient parsing and preprocessing.
-
-  
-
-  
-
-## Table of Contents
-
-  
-
-- [Key Features](#key-features)
-
-- [Architecture Overview](#architecture-overview)
-
-- [Build Multiverse](#build-multiverse)
-
-- [Build with Docker (TBD)](#build-with-docker-tbd)
-
-- [Build Manually](#build-manually)
-
-- [Run Multiverse](#run-multiverse)
-
-- [Dependencies](#dependencies)
-
-- [Future Work](#future-work)
-
-- [Contributing](#contributing)
-
-- [Contact Us](#contact-us)
-
-- [License](#license)
-
-  
-
----
-
-  
-
-## Key Features
-
-  
-
--  **System Simulator**: Emulates large-scale LLM training systems, supporting parallel strategies (TP, DP), collective communication algorithms (e.g., Ring AllReduce), and advanced congestion control (DCQCN). Efficiently runs on both CPU and GPU.
-
--  **Network Simulator**: Models advanced network topologies (Fattree, BCube, HPN) and high-performance collective communication, with full GPU acceleration and DOD.
-
--  **Flexible Configuration**: Input via Chakra files, with biob optimization for rapid scenario deployment and reproducibility.
-
-  
-
-  
-
-## Architecture Overview
-
-  
-
-
-
-![Archetecture](./docs/figs/multiverse2_arch.png)
-
-
-
-  
-
-## Build Multiverse  
-
-### Build with Docker (TBD)
-
-
-
-  
-
-### Build Manually
-
- Ensure you have the dependencies listed in [Dependencies](#dependencies).
-
-Fetch the repository (don't forget the `--recursive`!):
-
-
-```bash
-git  clone  --recursive  https://github.com/harnets/multiverse.git
-
-cd  multiverse
-
+### 2 install torch
+```bash 
+pip3 install torch torchvision torchaudio
 ```
 
- 
+### 3 install cmake3.27(recommended)：
 
-For **Linux and macOS**: build the simulator with CMake and Make:
-
-  
-
-```bash
-mkdir  build
-
-cd  build
-
-cmake  ..
-
-make  -j  # Use the number of cores you prefer
-
-cd  ..
-
+Download cmake3.27 from https://github.com/Kitware/CMake/releases/download/v3.27.6/cmake-3.27.6-linux-x86_64.sh, then
+```bash 
+$bash cmake-3.27.6-linux-x86_64.sh
+```
+Specify the path of cmake in ~/.bashrc：
+```bash 
+export PATH=your_directory/cmake-3.27.6-linux-x86_64/bin:$PATH
 ```
 
-  
 
-Set up the Python components of the repository with pip:
 
-  
-
+## Next, you should fetch the madrona_escape_room repo:
 ```bash
-pip  install  -e  .
-
+git clone --recursive git@github.com:ShawnshanksGui/multiverse-dev.git
+cd ./multiverse-dev/
 ```
 
-  
-
-  
-
-## Run Multiverse
-
-  
-
-After building, you can run a built-in example to verify your installation:
-
-  
-
-```bash
-cd  your_directory/multiverse/
-
-bash  run.sh
-
+if false，
+```
+cd ./multiverse-dev/
+git submodule update --init --recursive
 ```
 
-  
 
-  
+## Thirdly, for Linux and MacOS: Run `cmake` and then `make` to build the simulator:
+```bash
+mkdir build
+cd build
+cmake ..
+make -j # cores to build with
+cd ..
+```
 
-## Dependencies
+Fourth, setup the python components of the repository with `pip`:
+```bash
+pip install -e .
+cd ..
+```
 
-  
-
-### Supported Platforms
-
-  
-
-- **Linux:** Ubuntu 18.04 or newer
-
-- Other distributions with equivalent or newer kernel / GLIBC versions are also supported
-
-  
-
-### General Dependencies
-
-  
-
-- CMake 3.24 (or newer)
-
-- Python 3.9 (or newer)
-
-  
-
-### GPU-Backend Dependencies
+Fifth, check whether code is normally built up:
+```bash
+bash run.sh
+```
 
 
-- Volta or newer NVIDIA GPU
+# In the second pahse, switch to your branch and test it! (take branch 'net' as a example)
 
-- CUDA 12.5 (plus appropriate NVIDIA drivers).
-
-- **Linux Only:** CUDA on Windows lacks certain unified memory features required by Madrona.
-
-  
-
-If these dependencies are not present, Madrona's GPU backend will be disabled, but you can still use the CPU backend.
-
-  
-
-## Future Work
-
-|                              |                 |                            |                       |          |
-| ---------------------------- | --------------- | -------------------------- | --------------------- | -------- |
-| **Strategy/Algorithm**       | TP✔️             | DP✔️                        | PP                    | EP✔️      |
-| **Collective Communication** | Ring allreduce✔️ | Halving doubling allreduce | Binary tree allreduce | /        |
-| **Topology**                 | Fattree✔️        | HPN                        | Rail-optimized        | Bcube    |
-| **Congestion Control**       | DCQCN✔️          | HPCC                       | Timely                | Poseidon |
-| **Scale up network DES**     | PCIe            | NVLINK                     | TTPoE                 | UALink   |
-
-✔️ indicates that the corresponding feature is ready in Multiverse 2.0. Others are planned for future releases.
+```bash
+git checkout net
+bash run.sh
+```
+if no error happens, success!!! 
+You can start your development of multiverse! Have fun and make a difference😂!
 
 
-## Contributing
+# (optional) if you have already developed a lot code in your current local repo, you replace your code with the code in multiverse repo
 
-Contributions are welcome! Feel free to report issues or submit pull requests. Please follow our contribution guidelines.
+```
+cp -r ./your_repo/src ./your_repo/scripts ./your_repo/run.sh ./multiverse-dev/
+cd ./multiverse-dev
+mkdir build
+cd build
+cmake ..
+make -j   # cores to build with
+cd ..
+pip install -e .
+cd ..
+bash run.sh
+```
 
 
+# How to inject traffic flows
+Use the system of "comm_set_flow". Every NPUs would execute the system at every frame.
+For example, build up 15 flows
+( 
+1-th flow: NPU 0 --> NPU 1
+2-th flow: NPU 1 --> NPU 2 
+...
+15-th flow: NPU 14 --> NPU 15
+16-th flow: NPU 15 --> NPU 0
+). 
+And make sure each flow has a different flow_id.
 
-## Contact Us
+```cpp
 
-[multiverse@harnets.ai](mailto:multiverse@harnets.ai)
+inline void comm_set_flow(Engine &ctx, NET_NPU_ID _net_npu_id,
+                       NewFlowQueue &_new_flow_queue, SimTime &_sim_time,  
+                       SimTimePerUpdate &_sim_time_per_update) {
+    
+    #if PRINT_SYS_LOG
+    if (_net_npu_id.net_npu_id == 0) {
+        printf("*********Enter into comm_set_flow, net_npu_id: %u\n", _net_npu_id.net_npu_id);
+        printf("comm_set_flow: _new_flow_queue, before enqueue, len = %d\n", get_queue_len(_new_flow_queue));
+    }
+    #endif
+
+    if((_sim_time.sim_time % (1000000LL*1000) != 0)) {return;}
 
 
+    //a step of ring all reduce
+    if (_net_npu_id.net_npu_id < ctx.data().num_net_npu) {
+        uint32_t src = _net_npu_id.net_npu_id;
+        uint32_t dst = (_net_npu_id.net_npu_id+1)%(ctx.data().num_net_npu);
+        uint64_t flow_size = 1LL * 1000* 1000; 
+        // Lock only around shared resource access
+        setFlow(ctx, src, dst, flow_size, flow_id);
+    }
 
-## License
+    // uint32_t batch_size = 32;
+    // uint32_t token_size = 7*1024;
+    // uint32_t top_k = 8;
+    // uint64_t new_flow_size = batch_size * token_size * top_k / ctx.data().num_net_npu; // Unit is Byte
+    // if (_net_npu_id.net_npu_id < ctx.data().num_net_npu) {
+    //     for (uint32_t dst = 0; dst < ctx.data().num_net_npu; dst++) {
+    //         if (dst == _net_npu_id.net_npu_id) continue;
+    //         uint32_t src = _net_npu_id.net_npu_id;
+    //         setFlow(ctx, src, dst, new_flow_size, flow_id);
+    //     }
+    // }
 
-This project is licensed under the MIT License.
+    #if PRINT_SYS_LOG
+    if (_net_npu_id.net_npu_id == 0) {
+        printf("Exiting create_flow for net_npu_id: %u\n", _net_npu_id.net_npu_id);
+    }
+    #endif
+}
+
+
+```

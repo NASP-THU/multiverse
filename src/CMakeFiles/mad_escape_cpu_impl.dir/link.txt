@@ -1,2 +1,0 @@
-/home/zhangran/work/madrona2/madrona_escape_room/external/madrona/external/madrona-toolchain/bundled-toolchain/toolchain/bin/llvm-ar qc libmad_escape_cpu_impl.a CMakeFiles/mad_escape_cpu_impl.dir/sim.cpp.o CMakeFiles/mad_escape_cpu_impl.dir/level_gen.cpp.o
-/home/zhangran/work/madrona2/madrona_escape_room/external/madrona/external/madrona-toolchain/bundled-toolchain/toolchain/bin/llvm-ranlib libmad_escape_cpu_impl.a

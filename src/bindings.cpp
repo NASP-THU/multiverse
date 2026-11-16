@@ -21,18 +21,54 @@ NB_MODULE(madrona_escape_room, m) {
         .def(nb::init<>())
         .def_prop_rw("aj_link",
             [](Topo &self) {
-                // Return a NumPy array referencing the C++ data
-                return nb::ndarray<nb::numpy, uint32_t>(
-                    self.aj_link, {100000, 5}, nb::handle());
+                return nb::ndarray<nb::numpy, uint16_t>(
+                    self.aj_link, {MAX_LINKS_NUM, 5}, nb::handle()); // Changed to uint16_t
             },
             [](Topo &self, nb::ndarray<> arr) {
-                if (arr.ndim() != 2 || arr.shape(0) != 100000 || arr.shape(1) != 5)
-                    throw std::invalid_argument("aj_link must have shape (100000, 5)");
-                std::memcpy(self.aj_link, arr.data(), sizeof(uint32_t) * 100000 * 5);
+                if (arr.ndim() != 2 || arr.shape(0) != MAX_LINKS_NUM || arr.shape(1) != 5)
+                    throw nb::value_error("aj_link must have shape (MAX_LINKS_NUM, 5)");
+                std::memcpy(self.aj_link, arr.data(), sizeof(uint16_t) * MAX_LINKS_NUM * 5); // Changed to uint16_t
             }
         )
         .def_rw("link_num", &Topo::link_num)
-        .def_rw("net_npu_num", &Topo::net_npu_num);
+        .def_rw("net_npu_num", &Topo::net_npu_num)
+        .def_rw("sw_num", &Topo::sw_num) // Bind sw_num
+        .def_prop_rw("port_num",
+            [](Topo &self) {
+                return nb::ndarray<nb::numpy, int16_t>(
+                    self.port_num, {MAX_SW_NUM + MAX_NET_NPU_NUM}, nb::handle()); // Changed to int16_t
+            },
+            [](Topo &self, nb::ndarray<> arr) {
+                if (arr.ndim() != 1 || arr.shape(0) != (MAX_SW_NUM + MAX_NET_NPU_NUM))
+                    throw nb::value_error("port_num must have shape (MAX_SW_NUM + MAX_NET_NPU_NUM)");
+                std::memcpy(self.port_num, arr.data(), sizeof(int16_t) * (MAX_SW_NUM + MAX_NET_NPU_NUM)); // Changed to int16_t
+            }
+        )
+
+        .def_prop_rw("next_hop_port",
+            [](Topo &self) {
+                return nb::ndarray<nb::numpy, int16_t>(
+                    self.next_hop_port, {MAX_ALL_PORT_NUM}, nb::handle()); // Changed to int16_t
+            },
+            [](Topo &self, nb::ndarray<> arr) {
+                if (arr.ndim() != 1 || arr.shape(0) != MAX_ALL_PORT_NUM)
+                    throw nb::value_error("next_hop_port must have shape (MAX_ONE_SW_PORT_NUM)");
+                std::memcpy(self.next_hop_port, arr.data(), sizeof(int16_t) * MAX_ALL_PORT_NUM); // Changed to int16_t
+            }
+        )
+
+        .def_rw("sw_port_num", &Topo::sw_port_num)
+        .def_rw("net_npu_port_num", &Topo::net_npu_port_num)
+        ;
+
+    // Note: Fib class is too large for nanobind (90MB > 16MB limit)
+    // We create a minimal FibProxy class instead and pass data via tensors
+    struct FibProxy {
+        // Empty proxy class for Fib - actual data passed via tensors
+    };
+    
+    nb::class_<FibProxy>(m, "Fib")
+        .def(nb::init<>());
 
     nb::class_<Manager> (m, "SimManager")
         .def("__init__", [](Manager *self,
@@ -43,25 +79,19 @@ NB_MODULE(madrona_escape_room, m) {
                             bool auto_reset,
                             bool enable_batch_renderer,
                             uint32_t k_aray,
-                            uint32_t cc_method,
-                            nb::ndarray<> links,
-                            Topo topo
+                            uint32_t cc_method
                         ) 
         {
-            if (links.ndim() != 2) {
-                throw std::invalid_argument("Links must be a 2D array");
+            // Validate basic parameters
+            if (num_worlds <= 0 || num_worlds > 1000) {
+                throw nb::value_error("num_worlds must be between 1 and 1000");
             }
-            if (links.shape(0) != 2 || links.shape(1) != 100) {
-                throw std::invalid_argument("Links must have shape (2, 100)");
-            }
-
-            // Convert the flat data pointer to a 2D array representation
-            uint32_t **links_2d = new uint32_t*[links.shape(0)];
-            for (size_t i = 0; i < links.shape(0); ++i) {
-                links_2d[i] = static_cast<uint32_t *>(links.data()) + i * links.shape(1);
-            }
-
             
+            if (gpu_id < 0 || gpu_id >= 8) {
+                throw nb::value_error("gpu_id must be between 0 and 15");
+            }
+            
+            // Create Manager with basic config only
             new (self) Manager(Manager::Config {
                 .execMode = exec_mode,
                 .gpuID = (int)gpu_id,
@@ -69,10 +99,8 @@ NB_MODULE(madrona_escape_room, m) {
                 .randSeed = (uint32_t)rand_seed,
                 .autoReset = auto_reset,
                 .enableBatchRenderer = enable_batch_renderer,
-                .kAray = (uint32_t)k_aray, // fei add in 20241215
-                .ccMethod = (uint32_t)cc_method,
-                .topo = topo, // Reordered to match declaration order
-                .Links = links_2d // Pass the 2D array pointer
+                .kAray = (uint32_t)k_aray,
+                .ccMethod = (uint32_t)cc_method
             });
         }, nb::arg("exec_mode"),
            nb::arg("gpu_id"),
@@ -80,11 +108,9 @@ NB_MODULE(madrona_escape_room, m) {
            nb::arg("rand_seed"),
            nb::arg("auto_reset"),
            nb::arg("enable_batch_renderer") = false,
-           nb::arg("k_aray") = 4, // fei add in 20241215
-           nb::arg("cc_method") = 0,
-           nb::arg("links"), // Update argument name
-           nb::arg("topo")
-        )   
+           nb::arg("k_aray") = 4,
+           nb::arg("cc_method") = 0
+        )
         .def("step", &Manager::step)
         .def("reset_tensor", &Manager::resetTensor)
         .def("action_tensor", &Manager::actionTensor)
@@ -106,7 +132,8 @@ NB_MODULE(madrona_escape_room, m) {
         .def("madronaEventsResult_tensor", &Manager::madronaEventsResultTensor)
         .def("simulation_time_tensor", &Manager::simulationTimeTensor)
         .def("processParams_tensor",&Manager::processParamsTensor)
-        .def("chakra_nodes_data_tensor", &Manager::chakraNodesDataTensor)
+        .def("topo_tensor", &Manager::topoTensor)
+        .def("fib_tensor", &Manager::fibTensor)
     ;
 }
 

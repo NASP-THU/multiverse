@@ -1,7 +1,8 @@
 /build
-/out
-/build-debug
+/src/gridworld/__pycache__
+/scripts/__pycache__
 /.vs
 /CMakeSettings.json
-/scripts/__pycache__
-/train_src/madrona_escape_room_learn/__pycache__
+/gen_fib_table/tmpfile/
+data
+.vscode

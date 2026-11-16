@@ -40,25 +40,56 @@ public:
             entries[i] = Entry(); // 初始化每个Entry
         }
     }
-    
-    //需要在key的自定义类中重载比较符号==
-    T2 &operator[](const T1 &key)
-    {
-        return get(key);
+        
+    // 只查找，不插入。找不到时返回 nullptr 或特殊值。
+    Entry* find(const T1 &key) {
+        for (int i = 0; i < length; ++i) {
+            if (entries[i].key == key)
+                return &entries[i];
+        }
+        return nullptr; // 没找到返回 nullptr
     }
+
+    // 可写/可插入：没找到就插入并返回引用
+    T2 &operator[](const T1 &key) {
+        for (int i = 0; i < length; ++i) {
+            if (entries[i].key == key)
+                return entries[i].value;
+        }
+        assert(length < MAP_SIZE - 1);
+        entries[length] = Entry(key, T2{});
+        return entries[length++].value;
+    }
+
+
+
+    // T2 operator[](const T1 &key) const
+    // {
+    //     for (int i = 0; i < length; i++)
+    //     {
+    //         if (entries[i].key == key)
+    //             return entries[i].value;
+    //     }
+    //     if constexpr (std::is_same<T2, madrona::Entity>::value) {
+    //         return madrona::Entity::none();
+    //     } else {
+    //         return T2{};
+    //     }
+    // }
+
 
     T2 &at(const T1 &key){
         return get(key);
     }
 
-    Entry* find(const T1& key) {
-        for (int i = 0; i < length; i++) {
-            if (entries[i].key == key) {
-                return &entries[i];  // 返回指向找到的键值对的指针
-            }
-        }
-        return endEntry();  // 如果没有找到，返回 end()
-    }
+    // Entry* find(const T1& key) {
+    //     for (int i = 0; i < length; i++) {
+    //         if (entries[i].key == key) {
+    //             return &entries[i];  // 返回指向找到的键值对的指针
+    //         }
+    //     }
+    //     return endEntry();  // 如果没有找到，返回 end()
+    // }
 
     Entry* endEntry() {
         return &entries[length];  // 返回数组末尾的指针，表示没有找到
@@ -199,8 +230,9 @@ enum class ExportID : uint32_t {
     MadronaEvents,
     MadronaEventsResult,
     ProcessParams,
+    TopoTensor,
+    FibTensor,
 //
-    ChakraNodesData,
 
     NumExports,
 
@@ -233,8 +265,6 @@ struct Sim : public madrona::WorldBase {
         const madrona::render::RenderECSBridge *renderBridge;
         uint32_t kAray; // fei add in 20241215
         uint32_t ccMethod; // fei add in 20241215
-        Topo topo;
-        uint32_t **Links; // Update to 2D pointer
     };
 
     // This class would allow per-world custom data to be passed into
@@ -289,45 +319,49 @@ struct Sim : public madrona::WorldBase {
     Entity agents[consts::numAgents];
 */
 
+    Entity agents[1];
+    bool entities_created;
 
-
-    Entity inPorts[(K_ARY*K_ARY*5/4)*K_ARY]; 
-    Entity ePorts[(K_ARY*K_ARY*5/4)*K_ARY];
+    Entity inPorts[MAX_ALL_PORT_NUM]; 
+    Entity ePorts[MAX_ALL_PORT_NUM];
     uint32_t numInPort;
     uint32_t numEPort;
 
-    Entity _switches[K_ARY*K_ARY*5/4];
-    uint32_t numSwitch;
-
-    // Entity _snd_flows[2*K_ARY*K_ARY*K_ARY/4];
-    // Entity _recv_flows[2*K_ARY*K_ARY*K_ARY/4];
-    // uint32_t num_snd_flow;
-    // uint32_t num_recv_flow;   
+    Entity _switches[MAX_SW_NUM];
 
     // indexed by the flow_id
     // each net_npu has a map of snd_flows and a map of rcv_flows
-    Map<uint64_t, Entity> snd_flows[K_ARY*K_ARY*K_ARY/4]; 
-    Map<uint64_t, Entity> recv_flows[K_ARY*K_ARY*K_ARY/4];
-    Map<uint64_t, Entity> recv_snd_flows[K_ARY*K_ARY*K_ARY/4]; 
-    Map<uint64_t, Entity> snd_recv_flows[K_ARY*K_ARY*K_ARY/4];
-    uint32_t flow_cnt[K_ARY*K_ARY*K_ARY/4]; // for flow_id
+    Map<uint64_t, Entity> snd_flows[MAX_NET_NPU_NUM]; 
+    Map<uint64_t, Entity> recv_flows[MAX_NET_NPU_NUM];
+    Map<uint64_t, Entity> recv_snd_flows[MAX_NET_NPU_NUM]; 
+    Map<uint64_t, Entity> snd_recv_flows[MAX_NET_NPU_NUM];
+    uint32_t flow_cnt[MAX_NET_NPU_NUM]; // for flow_id
 
-    Entity _nics[K_ARY*K_ARY*K_ARY/4];
+    Entity _net_npus[MAX_NET_NPU_NUM];
+
+    Entity _nics[MAX_NET_NPU_NUM*2];
     uint32_t num_nic;
+    
+    uint16_t aj_link[MAX_LINKS_NUM][5];
+    uint32_t num_link;
 
-    Entity _net_npus[K_ARY*K_ARY*K_ARY/4];
-    uint32_t num_net_npu;  
+    uint32_t num_net_npu;
+    uint32_t num_switch;
+    
+    int16_t port_num[MAX_SW_NUM + MAX_NET_NPU_NUM]; // Changed to int16_t
+    
+    //next_hop
+    int16_t next_hop_port[MAX_ALL_PORT_NUM]; // Changed to int16_t
+    
+    uint32_t sw_port_num;
+    uint32_t net_npu_port_num;
+    
+    //FIB
+    int16_t fib[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_ONE_SW_PORT_NUM];
+    int16_t next_hop_num[MAX_SW_NUM + MAX_NET_NPU_NUM][MAX_SW_NUM + MAX_NET_NPU_NUM];  
 
-    // 添加锁以保护共享资源
+    //spine lock to address multiple-to-one write
     madrona::SpinLock flow_lock;
-
-    Entity init_entity;
-    Entity timer_entity;
-    Entity chakra_nodes_entities[MAX_CHAKRA_NODES];
-    Entity next_process_time_entity;
-    Entity sys_config_entity;
-
-    Entity node_flows_exec_entity[MAX_CHAKRA_NODES][MAX_FLOW_NUM_PER_COMM_NODE];
 };
 
 class Engine : public ::madrona::CustomContext<Engine, Sim> {
